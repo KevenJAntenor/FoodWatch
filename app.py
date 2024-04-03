@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from database import Database
 from math import ceil
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -15,6 +15,25 @@ scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
 
+@app.route('/contrevenants', methods=['GET'])
+def get_violations_between_dates():
+    du = request.args.get('du', default=None)
+    au = request.args.get('au', default=None)
+
+
+    if not du or not au:
+        return jsonify({'error': 'Both start and end dates must be provided.'}), 400
+
+
+    db = Database()
+    violations = db.get_violations_between_dates(du, au)
+
+
+    return jsonify(violations)
+
+@app.route('/doc')
+def documentation():
+    return render_template('doc.html')
 
 @app.route('/', methods=['GET', 'POST'])
 def index():

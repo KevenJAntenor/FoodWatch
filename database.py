@@ -49,3 +49,21 @@ class Database:
         rows = cur.fetchall()
 
         return rows, total_count
+
+    def get_violations_between_dates(self, start_date, end_date):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        start_date_int = int(start_date.replace('-', ''))
+        end_date_int = int(end_date.replace('-', ''))
+
+        query = """
+            SELECT * FROM violations
+            WHERE date BETWEEN ? AND ?
+        """
+        cursor.execute(query, (start_date_int, end_date_int))
+
+        violations = cursor.fetchall()
+        conn.close()
+        columns = [col[0] for col in cursor.description]
+        return [dict(zip(columns, row)) for row in violations]

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}API Documentation{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>API Documentation</h1>
+    <p>This page provides documentation for the API endpoints.</p>
+
+    <section class="mt-3">
+        <h2>Get Violations</h2>
+        <p>Retrieves a list of violations between two specified dates.</p>
+        <h4>GET /contrevenants?du={start_date}&au={end_date}</h4>
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>du</code> - The start date in ISO 8601 format (YYYY-MM-DD).</li>
+            <li><code>au</code> - The end date in ISO 8601 format (YYYY-MM-DD).</li>
+        </ul>
+        <p><strong>Response:</strong> An array of violation records in JSON format.</p>
+        <h5>Example Request</h5>
+        <pre>GET /contrevenants?du=2023-01-08&au=2023-01-10</pre>
+        <h5>Example Response</h5>
+        <pre>[{"adresse":"359 Rue Bernard Ouest, Montréal, Québec", ...}]</pre>
+    </section>
+
+    <section class="mt-3">
+        <h3>Error Codes</h3>
+        <p>400 Bad Request - The request could not be understood by the server due to malformed syntax.</p>
+        <p>500 Internal Server Error - The server encountered an unexpected condition which prevented it from fulfilling the request.</p>
+    </section>
+
+    <section class="mt-3">
+        <h3>Field Descriptions</h3>
+        <table class="table">
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Description</th>
+      <th>Type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>id_poursuite</td>
+      <td>Unique identifier for the violation record.</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>business_id</td>
+      <td>Unique identifier for the business involved in the violation.</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>date</td>
+      <td>The date when the violation was recorded, in YYYYMMDD format.</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>description</td>
+      <td>Detailed description of the violation.</td>
+      <td>String</td>
+    </tr>
+    <tr>
+      <td>adresse</td>
+      <td>Physical address where the violation occurred.</td>
+      <td>String</td>
+    </tr>
+    <tr>
+      <td>date_jugement</td>
+      <td>The date when the judgement was made on the violation, in YYYYMMDD format.</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>etablissement</td>
+      <td>Name of the establishment involved in the violation.</td>
+      <td>String</td>
+    </tr>
+    <tr>
+      <td>montant</td>
+      <td>The amount fined for the violation.</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>proprietaire</td>
+      <td>Name of the owner of the establishment involved in the violation.</td>
+      <td>String</td>
+    </tr>
+    <tr>
+      <td>ville</td>
+      <td>City where the violation occurred.</td>
+      <td>String</td>
+    </tr>
+    <tr>
+      <td>statut</td>
+      <td>Current status of the violation (e.g., open, closed).</td>
+      <td>String</td>
+    </tr>
+    <tr>
+      <td>date_statut</td>
+      <td>The date when the current status was assigned to the violation, in YYYYMMDD format.</td>
+      <td>Integer</td>
+    </tr>
+    <tr>
+      <td>categorie</td>
+      <td>Category of the violation (e.g., restaurant, bakery).</td>
+      <td>String</td>
+    </tr>
+  </tbody>
+</table>
+    </section>
+
+
+</div>
+{% endblock %}
