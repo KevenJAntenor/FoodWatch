@@ -1,0 +1,62 @@
+body {
+    padding-top: 20px;
+}
+ table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+
+html, body {
+  height: 100%;
+}
+
+.form-center {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.form-inline .form-group {
+  margin-right: 0.5rem;
+}
+
+
+.form-inline .form-control {
+  min-width: 200px;
+}
+
+
+.form-inline .btn-primary {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+
+.container-custom {
+  padding: 2rem;
+
+}
+
+@media (max-width: 576px) {
+  .form-inline .form-control,
+  .form-inline .btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .form-inline .form-group {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+

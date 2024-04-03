@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <h1 class="mb-4">Search Results for "{{ search_term }}"</h1>
+
+    {% if rows %}
+        {% for row in rows %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{ row['etablissement'] }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">Owner: {{ row['proprietaire'] }}</h6>
+                <p class="card-text">{{ row['description'] }}</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Address: {{ row['adresse'] }}</li>
+                    <li class="list-group-item">Judgment Date: {{ row['date_jugement'] }}</li>
+                    <li class="list-group-item">Amount: {{ row['montant'] }}</li>
+                    <li class="list-group-item">Status: {{ row['statut'] }}, Date: {{ row['date_statut'] }}</li>
+                    <li class="list-group-item">Category: {{ row['categorie'] }}</li>
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if total_pages > 1 %}
+        <nav aria-label="Search results pages">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if current_page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="?search_by={{ search_by }}&search_term={{ search_term }}&page={{ current_page - 1 }}">Previous</a>
+                </li>
+                {% for page in range(1, total_pages + 1) %}
+                <li class="page-item {% if page == current_page %}active{% endif %}">
+                    <a class="page-link" href="?search_by={{ search_by }}&search_term={{ search_term }}&page={{ page }}">{{ page }}</a>
+                </li>
+                {% endfor %}
+                <li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="?search_by={{ search_by }}&search_term={{ search_term }}&page={{ current_page + 1 }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="alert alert-warning" role="alert">
+            No results found.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
