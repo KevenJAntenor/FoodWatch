@@ -58,8 +58,10 @@ class Database:
         end_date_int = int(end_date.replace('-', ''))
 
         query = """
-            SELECT * FROM violations
-            WHERE date BETWEEN ? AND ?
+        SELECT etablissement, COUNT(id_poursuite) as count
+        FROM violations
+        WHERE date BETWEEN ? AND ?
+        GROUP BY etablissement
         """
         cursor.execute(query, (start_date_int, end_date_int))
 
@@ -67,3 +69,4 @@ class Database:
         conn.close()
         columns = [col[0] for col in cursor.description]
         return [dict(zip(columns, row)) for row in violations]
+
