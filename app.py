@@ -1,9 +1,20 @@
 from flask import Flask, render_template, request, redirect, url_for
 from database import Database
 from math import ceil
-
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
+from scripts.sync_data import synchronize_data
 
 app = Flask(__name__)
+
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=synchronize_data, trigger="cron", hour=0)
+scheduler.start()
+
+atexit.register(lambda: scheduler.shutdown())
+
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -26,4 +37,4 @@ def search_results(search_by, search_term):
     return render_template('results.html', rows=rows, total_pages=total_pages, current_page=page, search_term=search_term, search_by=search_by)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(use_reloader=False)
