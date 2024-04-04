@@ -55,5 +55,23 @@ def search_results(search_by, search_term):
 
     return render_template('results.html', rows=rows, total_pages=total_pages, current_page=page, search_term=search_term, search_by=search_by)
 
+@app.route('/restaurant_names')
+def restaurant_names():
+    db = Database()
+    names = db.get_restaurant_names()
+    return jsonify(names)
+
+@app.route('/infractions_par_restaurant', methods=['GET'])
+def infractions_par_restaurant():
+    nom_restaurant = request.args.get('nom', type=str)
+    if not nom_restaurant:
+        return jsonify({'error': 'Restaurant name is required.'}), 400
+
+    db = Database()
+    infractions = db.get_infractions_by_restaurant(nom_restaurant)
+    return jsonify(infractions)
+
+
+
 if __name__ == '__main__':
     app.run(use_reloader=False)

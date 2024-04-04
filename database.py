@@ -70,3 +70,27 @@ class Database:
         columns = [col[0] for col in cursor.description]
         return [dict(zip(columns, row)) for row in violations]
 
+    def get_restaurant_names(self):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = "SELECT DISTINCT etablissement FROM violations ORDER BY etablissement"
+        cursor.execute(query)
+
+        names = [row['etablissement'] for row in cursor.fetchall()]
+        conn.close()
+        return names
+
+    def get_infractions_by_restaurant(self, nom_restaurant):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = """
+        SELECT * FROM violations
+        WHERE etablissement = ?
+        """
+        cursor.execute(query, (nom_restaurant,))
+
+        infractions = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return infractions

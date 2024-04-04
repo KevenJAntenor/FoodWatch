@@ -5,42 +5,62 @@
 {% block content %}
 <div class="container text-center mt-4">
     <h1 class="mb-4">Search for Violations</h1>
-    <form method="post" action="/" class="form-inline justify-content-center mb-4">
-        <div class="form-group mr-2">
-            <select name="search_by" id="search_by" class="form-control">
-                <option value="etablissement">Establishment Name</option>
-                <option value="proprietaire">Owner</option>
-                <option value="adresse">Street</option>
-            </select>
-        </div>
-        <div class="form-group mx-sm-3">
-            <input type="text" name="search_term" class="form-control" placeholder="Search term" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Search</button>
-    </form>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <form method="post" action="/" class="form-inline justify-content-center mb-4">
+                <div class="form-group mr-2">
+                    <select name="search_by" id="search_by" class="form-control">
+                        <option value="etablissement">Establishment Name</option>
+                        <option value="proprietaire">Owner</option>
+                        <option value="adresse">Street</option>
+                    </select>
+                </div>
+                <div class="form-group mx-sm-3">
+                    <input type="text" name="search_term" class="form-control" placeholder="Search term" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
 
-    <h2>Quick Search</h2>
-    <form id="quick-search-form" class="form-inline justify-content-center">
-        <div class="form-group mr-2">
-            <input type="date" class="form-control mb-2" id="start-date" required>
+            <h2 class="mt-5">Quick Search by Date</h2>
+            <form id="quick-search-form" class="form-inline justify-content-center mb-4">
+                <div class="form-group mr-2">
+                    <input type="date" class="form-control mb-2" id="start-date" required>
+                </div>
+                <div class="form-group mx-sm-3">
+                    <input type="date" class="form-control mb-2" id="end-date" required>
+                </div>
+                <button type="submit" class="btn btn-primary mb-2">Search</button>
+            </form>
+
+            <table class="table mt-4" id="results-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Etablissement</th>
+                            <th>Nombre de Contraventions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                    </tbody>
+                </table>
+
+            <h2 class="mt-5">Quick Search by Restaurant</h2>
+            <form id="recherche-nom-restaurant" class="form-inline justify-content-center mb-4">
+                <div class="form-group mr-2">
+                    <select id="select-restaurant" class="form-control">
+
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary mb-2">Search</button>
+            </form>
         </div>
-        <div class="form-group mx-sm-3">
-            <input type="date" class="form-control mb-2" id="end-date" required>
-        </div>
-        <button type="submit" class="btn btn-primary mb-2">Search</button>
-    </form>
-</div>
+    </div>
 
 <div class="container mt-4">
-    <table class="table" id="results-table" style="display: none;">
-        <thead>
-            <tr>
-                <th>Etablissement</th>
-                <th>Nombre de Contraventions</th>
-            </tr>
-        </thead>
-        <tbody id="results-body">
-        </tbody>
-    </table>
+
+    <div id="affichage-infractions" class="row">
+
+    </div>
+</div>
+
 </div>
 {% endblock %}
