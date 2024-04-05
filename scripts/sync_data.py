@@ -4,10 +4,36 @@ import requests
 import yaml
 import smtplib
 from email.mime.text import MIMEText
+import tweepy
 
-DATA_URL = 'https://data.montreal.ca/dataset/05a9e718-6810-4e73-8bb9-5955efeb91a0/resource/7f939a08-be8a-45e1-b208-d8744dca8fc6/download/violations.csv'
+DATA_URL = ('https://data.montreal.ca/dataset/05a9e718-6810-4e73-8bb9-5955efeb91a0/resource/7f939a08-be8a-45e1-b208'
+            '-d8744dca8fc6/download/violations.csv')
 DATABASE = 'db/db.db'
 EMAIL_CONFIG_FILE = 'config.yml'
+
+
+def setup_twitter_api():
+    client = tweepy.Client(
+        consumer_key='ZkAhLcqVoFre266dmGIQdn5M2',
+        consumer_secret='n3newK8MXEYsSRUXOEW9EObmyWzoCtqhOS25JWe69sgkfSJPlk',
+        access_token='1776065910807105536-cwW15KepnFCI78r0MdreqqcKKwx4hn',
+        access_token_secret='c51uc6QCDOxmJM3qrMzhcBnV9bYimgZPgPOGDE3gNVsKL',
+
+    )
+
+    return client
+
+
+def post_to_twitter(establishment_names):
+    client = setup_twitter_api()
+
+    for name in establishment_names:
+        tweet = f"New violation reported at {name} #ViolationAlert"
+        try:
+            client.create_tweet(text=tweet)
+            print(f"Tweeted: {tweet}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
 
 def load_email_config():
@@ -61,8 +87,10 @@ def synchronize_data():
         new_violations = detect_new_violations(new_data, conn)
         if new_violations:
             cursor = conn.cursor()
+            establishment_names = []
             for row in new_violations:
                 values = tuple(row[key] for key in csv_data.fieldnames)
+                establishment_names.append(row['etablissement'])
                 cursor.execute("""
                     INSERT INTO violations (
                         id_poursuite, business_id, date, description, adresse, date_jugement,
@@ -77,5 +105,6 @@ def synchronize_data():
                 new_violations
             )
             send_email("New Violations Detected", email_body, config)
+            post_to_twitter(set(establishment_names))
 
     print('Data synchronization complete.')
