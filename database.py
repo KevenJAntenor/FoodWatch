@@ -107,3 +107,15 @@ class Database:
         establishments = cursor.fetchall()
         result = [{"etablissement": row[0], "infraction_count": row[1]} for row in establishments]
         return result
+
+    def insert_inspection_request(self, establishment, address, city, visit_date, last_name, first_name, description):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = """
+            INSERT INTO inspection_requests (nom_etablissement, adresse, ville, date_visite, nom_client, prenom_client, 
+            description_probleme)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
+        cursor.execute(query, (establishment, address, city, visit_date, last_name, first_name, description))
+        conn.commit()

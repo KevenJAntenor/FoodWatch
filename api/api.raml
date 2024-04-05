@@ -41,6 +41,101 @@ version: v1
                 }
               ]
 
+/establishments_xml:
+  get:
+    description: Retrieve a list of establishments with the count of known violations in XML format.
+    responses:
+      200:
+        body:
+          application/xml:
+            example: |
+              <?xml version="1.0" encoding="UTF-8"?>
+              <establishments>
+                <establishment>
+                  <name>BOULANGERIE CHESKIE</name>
+                  <violations>5</violations>
+                </establishment>
+                <establishment>
+                  <name>RESTAURANT A & W</name>
+                  <violations>3</violations>
+                </establishment>
+              </establishments>
+
+types:
+  EstablishmentCsv:
+    type: file
+    fileTypes: ['text/csv']
+    description: CSV contenant le nom de l'établissement et le nombre d'infractions.
+
+/establishments_csv:
+  get:
+    description: Obtient une liste des établissements avec le nombre d'infractions en format CSV.
+    responses:
+      200:
+        body:
+          text/csv:
+            type: EstablishmentCsv
+            example: |
+              "Etablissement","Nombre d'Infractions"
+              "Café du Monde",5
+              "Boulangerie Pierre",3
+            description: Réponse CSV avec l'en-tête et les lignes représentant chaque établissement et son nombre d'infractions.
+      400:
+        description: Requête malformée. L'URL doit être correctement formatée.
+      500:
+        description: Erreur interne du serveur.
+
+types:
+  demande_inspection:
+    type: object
+    properties:
+      nom_etablissement: string
+      adresse: string
+      ville: string
+      date_visite: date-only
+      nom_client: string
+      prenom_client: string
+      description_probleme: string
+    required:
+      - nom_etablissement
+      - adresse
+      - ville
+      - date_visite
+      - nom_client
+      - prenom_client
+      - description_probleme
+
+/demande_inspection:
+  post:
+    description: Create a new inspection request
+    body:
+      application/json:
+        type: InspectionRequest
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "message": "Demande d'inspection reçue avec succès."
+              }
+      400:
+        body:
+          application/json:
+            example: |
+              {
+                "error": "Validation failed for one or more fields."
+              }
+      500:
+        description: Internal Server Error
+        body:
+          application/json:
+            example: |
+              {
+                "error": "Internal server error. Please try again later."
+              }
+
+
 /doc:
   get:
     description: Provides the RAML documentation of this API.

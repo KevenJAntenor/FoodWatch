@@ -14,3 +14,16 @@ CREATE TABLE IF NOT EXISTS violations (
     categorie TEXT,
     PRIMARY KEY(id_poursuite)
 );
+
+CREATE TABLE IF NOT EXISTS inspection_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nom_etablissement TEXT NOT NULL,
+    adresse TEXT NOT NULL,
+    ville TEXT NOT NULL,
+    date_visite TEXT NOT NULL,
+    nom_client TEXT NOT NULL,
+    prenom_client TEXT NOT NULL,
+    description_probleme TEXT NOT NULL
+);
+
+

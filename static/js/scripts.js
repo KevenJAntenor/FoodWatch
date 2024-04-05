@@ -96,3 +96,56 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error fetching restaurant violations:', error));
     });
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    $('#submitComplaintButton').click(function(e) {
+        e.preventDefault();
+
+        var formData = {
+            nom_etablissement: $('#establishment').val(),
+            adresse: $('#address').val(),
+            ville: $('#city').val(),
+            date_visite: $('#visitDate').val(),
+            nom_client: $('#lastName').val(),
+            prenom_client: $('#firstName').val(),
+            description_probleme: $('#description').val()
+        };
+
+        if (!formData.nom_etablissement || !formData.adresse || !formData.ville || !formData.date_visite || !formData.nom_client || !formData.prenom_client || !formData.description_probleme) {
+            $('#flashMessages').removeClass('d-none').addClass('alert-danger').text('Tous les champs sont requis.').fadeTo(5000, 500).slideUp(500, function() {
+                $('#flashMessages').slideUp(500);
+            });
+            return;
+        }
+
+        $.ajax({
+            url: '/demande_inspection',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                $('#flashMessages').removeClass('d-none alert-danger').addClass('alert-success').text('La plainte a été soumise avec succès.').fadeTo(5000, 500).slideUp(500, function() {
+                    $('#flashMessages').slideUp(500);
+                });
+                $('#complaintForm')[0].reset();
+            },
+            error: function(xhr, status, error) {
+                console.error('Erreur lors de la soumission de la plainte:', xhr.responseText);
+                $('#flashMessages').removeClass('d-none alert-success').addClass('alert-danger').text('Erreur lors de la soumission de la plainte. Veuillez réessayer.').fadeTo(5000, 500).slideUp(500, function() {
+                    $('#flashMessages').slideUp(500);
+                });
+            }
+        });
+    });
+});
+
+
+
+
+
+
+
+
+
+
+

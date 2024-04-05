@@ -1,9 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, Response
 from database import Database
 from math import ceil
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 from scripts.sync_data import synchronize_data
+from dicttoxml import dicttoxml
+from io import StringIO
+import csv
+from jsonschema import validate, ValidationError
+import json
 
 app = Flask(__name__)
 
@@ -79,6 +84,65 @@ def get_establishments():
     db = Database()
     establishments = db.get_establishments_with_infractions()
     return jsonify(establishments)
+
+
+@app.route('/establishments_xml')
+def establishments_xml():
+    db = Database()
+    establishments = db.get_establishments_with_infractions()
+
+    xml = dicttoxml(establishments, custom_root='establishments', attr_type=False)
+    return Response(xml, mimetype='application/xml; charset=utf-8')
+
+
+@app.route('/establishments_csv')
+def establishments_csv():
+    db = Database()
+    establishments = db.get_establishments_with_infractions()
+
+    si = StringIO()
+    writer = csv.writer(si)
+
+    writer.writerow(['Etablissement', 'Nombre d\'Infractions'])
+
+    for establishment in establishments:
+        writer.writerow([establishment['etablissement'], establishment['infraction_count']])
+
+    si.seek(0)
+
+    return Response(si.getvalue(), mimetype='text/csv', headers={"Content-Disposition": "attachment;filename"
+                                                                                        "=establishments.csv"})
+
+
+@app.route('/demande_inspection', methods=['POST'])
+def demande_inspection():
+    with open('schemas/inspection_request_schema.json') as schema_file:
+        schema = json.load(schema_file)
+
+    request_data = request.get_json()
+
+    try:
+        validate(instance=request_data, schema=schema)
+
+        establishment = request_data['nom_etablissement']
+        address = request_data['adresse']
+        city = request_data['ville']
+        visit_date = request_data['date_visite']
+        last_name = request_data['nom_client']
+        first_name = request_data['prenom_client']
+        description = request_data['description_probleme']
+
+        db = Database()
+        db.insert_inspection_request(establishment, address, city, visit_date, last_name, first_name, description)
+
+        return jsonify({"message": "Demande d'inspection reçue avec succès."}), 200
+    except ValidationError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route('/complaint')
+def complaint():
+    return render_template('complaint.html')
 
 
 if __name__ == '__main__':
