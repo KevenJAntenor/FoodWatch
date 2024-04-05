@@ -94,3 +94,16 @@ class Database:
         infractions = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return infractions
+
+    def get_establishments_with_infractions(self):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT etablissement, COUNT(*) as infraction_count
+            FROM violations
+            GROUP BY etablissement
+            ORDER BY infraction_count DESC
+        """)
+        establishments = cursor.fetchall()
+        result = [{"etablissement": row[0], "infraction_count": row[1]} for row in establishments]
+        return result

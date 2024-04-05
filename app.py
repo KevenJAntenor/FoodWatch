@@ -30,7 +30,7 @@ def get_violations_between_dates():
 
 @app.route('/doc')
 def documentation():
-    return render_template('doc.html')
+    return render_template('api_documentation.html')
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -72,6 +72,13 @@ def infractions_par_restaurant():
     db = Database()
     infractions = db.get_infractions_by_restaurant(nom_restaurant)
     return jsonify(infractions)
+
+
+@app.route('/establishments')
+def get_establishments():
+    db = Database()
+    establishments = db.get_establishments_with_infractions()
+    return jsonify(establishments)
 
 
 if __name__ == '__main__':

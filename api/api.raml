@@ -1,0 +1,46 @@
+#%RAML 1.0
+title: Establishments Infractions API
+baseUri: http://localhost:5000/
+version: v1
+
+/contrevenants:
+  get:
+    description: Retrieves a list of violations, showing the count of contraventions per establishment, between two specified dates.
+    queryParameters:
+      du:
+        description: The start date in ISO 8601 format (YYYY-MM-DD).
+        type: string
+        required: true
+      au:
+        description: The end date in ISO 8601 format (YYYY-MM-DD).
+        type: string
+        required: true
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              [{"count":1,"etablissement":"BOULANGERIE CHESKIE"},{"count":1,"etablissement":"RESTAURANT A & W"}]
+
+/establishments:
+  get:
+    description: Retrieves a list of establishments and the count of known infractions for each, sorted in descending order by the number of infractions.
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              [
+                {
+                  "etablissement": "Restaurant XYZ",
+                  "infraction_count": 12
+                },
+                {
+                  "etablissement": "Cafe ABC",
+                  "infraction_count": 8
+                }
+              ]
+
+/doc:
+  get:
+    description: Provides the RAML documentation of this API.
