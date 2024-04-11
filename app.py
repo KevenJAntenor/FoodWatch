@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, Response
+from flask import Flask, flash, render_template, request, redirect, url_for, jsonify, Response
 from database import Database
 from math import ceil
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -143,6 +143,71 @@ def demande_inspection():
 @app.route('/complaint')
 def complaint():
     return render_template('complaint.html')
+
+
+@app.route('/create_user_profile', methods=["GET", "POST"])
+def create_user_profile():
+    with open('schemas/user_profile_schema.json', 'r') as schema_file:
+        user_profile_schema = json.load(schema_file)
+
+    if request.method == "GET":
+        establishments = get_establishments()
+        return render_template("register_new_profile.html", establishments=establishments), 200
+    else:
+
+        try:
+            validate(instance=request.json, schema=user_profile_schema)
+        except ValidationError as e:
+            flash("Erreur de validation du document JSON: {}".format(e.message))
+            return redirect(url_for("create_user_profile"))
+
+        nom = request.form.get("nom")
+        courriel = request.form.get("courriel")
+        mdp = request.form.get("mdp")
+        selectedEstablishments = request.form.get("selectedEstablishments")
+
+        db = Database()
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        existing_user = cursor.execute(
+            "SELECT * FROM utilisateurs WHERE adresse_courriel = ?", (courriel,)
+        ).fetchone()
+
+        if existing_user:
+            flash("Un utilisateur avec cette adresse e-mail existe déjà.")
+            return redirect(url_for("create_user_profile"))
+
+        try:
+
+            cursor.execute(
+                "INSERT INTO utilisateurs (nom_complet, adresse_courriel, mot_de_passe) VALUES (?, ?, ?)",
+                (nom, courriel, mdp)
+            )
+            conn.commit()
+
+            user_id = cursor.lastrowid
+
+            selected_establishments = json.loads(selectedEstablishments)
+            for establishment in selected_establishments:
+                cursor.execute(
+                    "INSERT INTO utilisateurs_etablissements (utilisateur_id, nom_etablissement) VALUES (?, ?)",
+                    (user_id, establishment)
+                )
+            conn.commit()
+
+            # flash("Le nouvel utilisateur a été créé avec succès.")
+            return redirect("/user_profile_home") 
+
+        except Exception as e:
+            flash("Une erreur s'est produite lors de la création de l'utilisateur.")
+            print(e) 
+            conn.rollback()
+
+        finally:
+            cursor.close()
+            conn.close()
+
+        return render_template("register_new_profile.html")  
 
 
 if __name__ == '__main__':

@@ -135,6 +135,35 @@ types:
                 "error": "Internal server error. Please try again later."
               }
 
+/create_user_profile:
+  post:
+    description: Create a new user profile.
+    body:
+      application/json:
+        type: /schemas/user_profile_schema.json
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "message": "User profile created successfully."
+              }
+      400:
+        body:
+          application/json:
+            example: |
+              {
+                "error": "Validation failed for one or more fields."
+              }
+      500:
+        description: Internal Server Error
+        body:
+          application/json:
+            example: |
+              {
+                "error": "Internal server error. Please try again later."
+              }
 
 /doc:
   get:
