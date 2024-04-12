@@ -1,4 +1,5 @@
-from flask import Flask, flash, render_template, request, redirect, url_for, jsonify, Response
+import uuid
+from flask import Flask, flash, render_template, request, redirect, session, url_for, jsonify, Response
 from database import Database
 from math import ceil
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -170,7 +171,7 @@ def create_user_profile():
         conn = db.get_connection()
         cursor = conn.cursor()
         existing_user = cursor.execute(
-            "SELECT * FROM utilisateurs WHERE adresse_courriel = ?", (courriel,)
+            "SELECT * FROM utilisateurs WHERE email = ?", (courriel,)
         ).fetchone()
 
         if existing_user:
@@ -180,7 +181,7 @@ def create_user_profile():
         try:
 
             cursor.execute(
-                "INSERT INTO utilisateurs (nom_complet, adresse_courriel, mot_de_passe) VALUES (?, ?, ?)",
+                "INSERT INTO utilisateurs (nom_complet, email, password) VALUES (?, ?, ?)",
                 (nom, courriel, mdp)
             )
             conn.commit()
@@ -208,6 +209,62 @@ def create_user_profile():
             conn.close()
 
         return render_template("register_new_profile.html")  
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login_user():
+    if request.method == "GET":
+        return render_template("login.html"), 200
+    else:
+        # Update the error message for email/password combination
+        error_message = "Email and/or Password incorrect!"
+        email = request.form["email"]
+        password = request.form["password"]
+
+        # Database connection
+        db = Database()
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        user = cursor.execute(
+            "SELECT password FROM utilisateurs WHERE email = ?", (email,)
+        ).fetchone()
+
+        if user is None:
+            cursor.close()
+            conn.close()
+            flash(error_message)
+            return render_template("login.html", error_message=error_message), 404
+
+        if password == user[0]:
+            # Access granted, create session
+            id_session = uuid.uuid4().hex
+            cursor.execute(
+                "INSERT INTO sessions (id_session, utilisateur) VALUES (?, ?)",
+                (id_session, email),
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            session["user"] = id_session
+            return redirect("/user_profile_home")
+
+        else:
+            cursor.close()
+            conn.close()
+            flash(error_message)
+            return render_template("login.html", error_message=error_message), 404
+        
+@app.route('/user_profile_home')
+def user_profile_home():
+    # db = Database()
+    # conn = db.get_connection()
+    # cursor = conn.cursor()
+
+    # user = cursor.execute(
+    #     "SELECT nom_etablissement FROM utilisateurs_etablissements WHERE utilisateur_id = ?", (email,)
+    # ).fetchone()
+    return render_template('user_profile_home.html')
 
 
 if __name__ == '__main__':

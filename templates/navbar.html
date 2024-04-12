@@ -1,7 +1,8 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 
   <a class="navbar-brand" href="/">Violation Search</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav"
+    aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
 
@@ -15,6 +16,12 @@
       </li>
       <li class="nav-item {{ 'active' if request.path == '/complaint' else '' }}">
         <a class="nav-link" href="/complaint">Complaint</a>
+      </li>
+      <li class="nav-item {{ 'active' if request.path == '/create_user_profile' else '' }}">
+        <a class="nav-link" href="/create_user_profile">New profile</a>
+      </li>
+      <li class="nav-item {{ 'active' if request.path == '/create_user_profile' else '' }}">
+        <a class="nav-link" href="/login">Login</a>
       </li>
     </ul>
   </div>

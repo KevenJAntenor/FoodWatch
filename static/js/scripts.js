@@ -4,12 +4,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.querySelector('.footer .text-muted').textContent = `© ${currentYear} Zhao Lin Wu et Keven Jude Antenor. All rights reserved.`;
 });
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('quick-search-form');
     const resultsTable = document.getElementById('results-table');
     const resultsBody = document.getElementById('results-body');
 
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function (e) {
         e.preventDefault();
         const startDate = document.getElementById('start-date').value;
         const endDate = document.getElementById('end-date').value;
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const dropdown = document.getElementById('select-restaurant');
 
     fetch('/restaurant_names')
@@ -47,11 +47,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const searchForm = document.getElementById('recherche-nom-restaurant');
     const resultsDiv = document.getElementById('affichage-infractions'); // Make sure this ID is correct
 
-    searchForm.addEventListener('submit', function(e) {
+    searchForm.addEventListener('submit', function (e) {
         e.preventDefault();
         const selectedRestaurant = document.getElementById('select-restaurant').value;
 
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultsDiv.innerHTML = '';
 
 
-                 infractions.forEach(infraction => {
+                infractions.forEach(infraction => {
 
                     let dateString = String(infraction.date);
 
@@ -97,8 +97,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-    $('#submitComplaintButton').click(function(e) {
+document.addEventListener('DOMContentLoaded', function () {
+    $('#submitComplaintButton').click(function (e) {
         e.preventDefault();
 
         var formData = {
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         if (!formData.nom_etablissement || !formData.adresse || !formData.ville || !formData.date_visite || !formData.nom_client || !formData.prenom_client || !formData.description_probleme) {
-            $('#flashMessages').removeClass('d-none').addClass('alert-danger').text('Tous les champs sont requis.').fadeTo(5000, 500).slideUp(500, function() {
+            $('#flashMessages').removeClass('d-none').addClass('alert-danger').text('Tous les champs sont requis.').fadeTo(5000, 500).slideUp(500, function () {
                 $('#flashMessages').slideUp(500);
             });
             return;
@@ -123,15 +123,15 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(formData),
-            success: function(response) {
-                $('#flashMessages').removeClass('d-none alert-danger').addClass('alert-success').text('La plainte a été soumise avec succès.').fadeTo(5000, 500).slideUp(500, function() {
+            success: function (response) {
+                $('#flashMessages').removeClass('d-none alert-danger').addClass('alert-success').text('La plainte a été soumise avec succès.').fadeTo(5000, 500).slideUp(500, function () {
                     $('#flashMessages').slideUp(500);
                 });
                 $('#complaintForm')[0].reset();
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error('Erreur lors de la soumission de la plainte:', xhr.responseText);
-                $('#flashMessages').removeClass('d-none alert-success').addClass('alert-danger').text('Erreur lors de la soumission de la plainte. Veuillez réessayer.').fadeTo(5000, 500).slideUp(500, function() {
+                $('#flashMessages').removeClass('d-none alert-success').addClass('alert-danger').text('Erreur lors de la soumission de la plainte. Veuillez réessayer.').fadeTo(5000, 500).slideUp(500, function () {
                     $('#flashMessages').slideUp(500);
                 });
             }
@@ -139,6 +139,164 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('formulaire');
+    const nom = document.getElementById('nom');
+    const courriel = document.getElementById('courriel');
+    const selectEstablishments = document.getElementById('select-establishments');
+    const mdp = document.getElementById('mdp');
+    const mdpConf = document.getElementById('mdpConf');
+
+    form.addEventListener('submit', function (event) {
+        let isValid = true;
+
+        document.getElementById('errNom').textContent = '';
+        document.getElementById('errCourriel').textContent = '';
+        document.getElementById('errSelect').textContent = '';
+        document.getElementById('errMdp').textContent = '';
+        document.getElementById('errMdpConf').textContent = '';
+
+        if (nom.value.trim() === '') {
+            document.getElementById('errNom').textContent = 'Veuillez entrer votre nom complet.';
+            isValid = false;
+        }
+
+        if (courriel.value.trim() === '') {
+            document.getElementById('errCourriel').textContent = 'Veuillez entrer votre courriel.';
+            isValid = false;
+        } else if (!isValidEmail(courriel.value.trim())) {
+            document.getElementById('errCourriel').textContent = 'Veuillez entrer une adresse courriel valide.';
+            isValid = false;
+        }
+
+        if (selectEstablishments.selectedOptions.length === 0) {
+            document.getElementById('errSelect').textContent = 'Veuillez choisir au moins un établissement.';
+            isValid = false;
+        }
+
+        if (mdp.value.trim() === '') {
+            document.getElementById('errMdp').textContent = 'Veuillez entrer votre mot de passe.';
+            isValid = false;
+        }
+
+        if (mdpConf.value.trim() === '') {
+            document.getElementById('errMdpConf').textContent = 'Veuillez confirmer votre mot de passe.';
+            isValid = false;
+        } else if (mdpConf.value.trim() !== mdp.value.trim()) {
+            document.getElementById('errMdpConf').textContent = 'Les mots de passe ne correspondent pas.';
+            isValid = false;
+        }
+        
+        if (isValid) {
+            const selectEstablishments = document.getElementById('select-establishments');
+            const selectedOptions = Array.from(selectEstablishments.selectedOptions).map(option => option.value);
+
+            const establishmentsInput = document.createElement('input');
+            establishmentsInput.type = 'hidden';
+            establishmentsInput.name = 'selectedEstablishments';
+            establishmentsInput.value = JSON.stringify(selectedOptions);
+            form.appendChild(establishmentsInput);
+        } else {
+            event.preventDefault(); 
+        }
+
+        console.log(selectEstablishments.selectedOptions)
+    });
+
+    function isValidEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const establishmentsSelect = document.getElementById('select-establishments');
+
+    fetch('/establishments')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(establishment => {
+                const option = document.createElement('option');
+                option.value = establishment.etablissement;
+                option.textContent = establishment.etablissement + " - Infractions: " + establishment.infraction_count;
+                establishmentsSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Erreur lors du chargement des établissements:', error));
+
+    const resultsDiv = document.getElementById('affichage-infractions');
+
+
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    loginForm.addEventListener('submit', function (event) {
+        let formIsValid = true; 
+
+        document.querySelectorAll('.invalid-feedback').forEach(function (element) {
+            element.style.display = 'none';
+        });
+
+        if (!emailInput.value.trim()) {
+            displayErrorMessage(emailInput, 'Please enter your email.');
+            formIsValid = false;
+        } else if (!isValidEmail(emailInput.value.trim())) {
+            displayErrorMessage(emailInput, 'Please enter a valid email address.');
+            formIsValid = false;
+        }
+
+        if (!passwordInput.value.trim()) {
+            displayErrorMessage(passwordInput, 'Please enter your password.');
+            formIsValid = false;
+        }
+
+        if (!formIsValid) {
+            event.preventDefault(); 
+        }
+
+        function displayErrorMessage(inputElement, message) {
+            const feedbackElement = inputElement.nextElementSibling; 
+            feedbackElement.textContent = message;
+            feedbackElement.style.display = 'block';
+        }
+
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const fileInput = document.getElementById('profilePic');
+    const form = document.getElementById('profile-pic-form');
+    const errorDisplay = document.createElement('p');
+    errorDisplay.className = 'text-danger';
+    fileInput.parentNode.insertBefore(errorDisplay, fileInput.nextSibling);
+
+    form.addEventListener('submit', function(event) {
+        const file = fileInput.files[0];
+        if (file) { 
+            const fileName = file.name.toLowerCase();
+            const validExtensions = ['.jpg', '.jpeg', '.png'];
+
+            if (!validExtensions.some(ext => fileName.endsWith(ext))) {
+                errorDisplay.textContent = 'Seuls les fichiers .jpg, .jpeg ou .png sont autorisés.';
+                event.preventDefault(); 
+            } else {
+                errorDisplay.textContent = ''; 
+            }
+        } else {
+            errorDisplay.textContent = ''; 
+        }
+    });
+});
 
 
 

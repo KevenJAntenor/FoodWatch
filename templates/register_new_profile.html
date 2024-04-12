@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}
+New profile
+{% endblock %}
+{% block content %}
+<section class="py-5">
+    <div class="container px-5">
+        <div class="bg-light rounded-3 py-5 px-4 px-md-5 mb-5">
+            <div class="text-center mb-5">
+                <div class="feature bg-primary bg-gradient text-white rounded-3 mb-3">
+                    <i class="bi bi-calendar-plus"></i>
+                </div>
+                <h1 class="fw-bolder">Créez-vous un profil utilisateur</h1>
+                <p class="lead fw-normal text-muted mb-0">Remplissez les informations ci-dessous</p>
+            </div>
+
+            <div class="row gx-5 justify-content-center">
+                <div class="col-lg-8 col-xl-6">
+                    <form id="formulaire" method="POST" action="/create_user_profile" novalidate>
+                        <div class="mb-3">
+                            <label for="nom" class="form-label">Nom complet *:</label>
+                            <input type="text" class="form-control" id="nom" name="nom" required>
+                            <div class="p-2">
+                                <p id="errNom" class="text-danger fw-light"></p>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="courriel" class="form-label">Courriel *:</label>
+                            <input type="email" class="form-control" id="courriel" name="courriel" required>
+                            <div class="p-2">
+                                <p id="errCourriel" class="text-danger fw-light"></p>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="select-establishments" class="form-label">Choisissez les établissements à surveiller *:
+                                <p><i>Selon le système d'exploitation, les utilisateurs de souris peuvent maintenir les
+                                    touches Ctrl, Commande ou Maj enfoncées, puis cliquer sur plusieurs options
+                                    pour les sélectionner/désélectionner.</i></p>
+                            </label>
+                            <select multiple class="form-control" id="select-establishments" required>
+
+                            </select>
+                            <div class="p-2">
+                                <p id="errSelect" class="text-danger fw-light"></p>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mdp" class="form-label">Mot de passe *:</label>
+                            <input type="password" class="form-control" id="mdp" name="mdp" required>
+                            <div class="p-2">
+                                <p id="errMdp" class="text-danger fw-light"></p>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mdpConf" class="form-label">Confirmation du mot de passe *:</label>
+                            <input type="password" class="form-control" id="mdpConf" name="mdpConf" required>
+                            <div class="p-2">
+                                <p id="errMdpConf" class="text-danger fw-light"></p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <p class="fw-light text-danger">Tous les champs ayant un astérisque (*) sont obligatoires.</p>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Créer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
