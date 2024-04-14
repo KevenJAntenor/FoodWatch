@@ -192,6 +192,16 @@ class Database:
 
         return etablissements
 
+    def get_user_emails_by_establishment_under_surveillance(self, establishment_name):
+        with self.connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT u.email
+                FROM utilisateurs u
+                JOIN utilisateurs_etablissements ue ON u.utilisateur_id = ue.utilisateur_id
+                WHERE ue.nom_etablissement = ?
+            """, (establishment_name,))
+            return [row[0] for row in cursor.fetchall()]
+        
 
     def insert_user(self, nom_complet, email, password):
         conn = self.get_connection()
