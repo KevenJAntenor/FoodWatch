@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}
+Erreur
+{% endblock %}
+{% block content %}
+{% if err == "404" %}
+<div class="container-fluid text-center pt-3 pb-4">
+    <h1 class="pt-5">Oups! Il n'y a rien à voir ici! (404)</h1>
+    <small class="text-secondary">La page que vous recherchez ne semble pas exister.</small>
+</div>
+{% elif err == "400" || error_message %}
+<div class="container-fluid text-center pt-3 pb-4">
+    <h1 class="pt-5">Votre requête est n'est pas bien formée (400) </h1>
+    {%if error_message%}
+
+    <h2 class="pt-5">{{ error_message }} </h2>
+
+    {% endif %}
+
+</div>
+{% elif err == "405" %}
+<div class="container-fluid text-center pt-3 pb-4">
+    <h1 class="pt-5">Accès interdit (405)</h1>
+    <small class="text-secondary">Vous ne possédez pas les droits pour voir ce contenu!</small>
+</div>
+{% else %}
+<div class="container-fluid text-center pt-3 pb-4">
+    <h1 class="pt-5">Une erreur interne s'est produite Code ({{ error_message }})</h1>
+    <small class="text-secondary">L'équipe de développement sera avisée...</small>
+</div>
+{% endif %}
+{% endblock %}

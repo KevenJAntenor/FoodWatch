@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 document.addEventListener('DOMContentLoaded', function () {
     const searchForm = document.getElementById('recherche-nom-restaurant');
-    const resultsDiv = document.getElementById('affichage-infractions'); // Make sure this ID is correct
+    const resultsDiv = document.getElementById('affichage-infractions');
 
     searchForm.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('errMdpConf').textContent = 'Les mots de passe ne correspondent pas.';
             isValid = false;
         }
-        
+
         if (isValid) {
             const selectEstablishments = document.getElementById('select-establishments');
             const selectedOptions = Array.from(selectEstablishments.selectedOptions).map(option => option.value);
@@ -198,10 +198,8 @@ document.addEventListener('DOMContentLoaded', function () {
             establishmentsInput.value = JSON.stringify(selectedOptions);
             form.appendChild(establishmentsInput);
         } else {
-            event.preventDefault(); 
+            event.preventDefault();
         }
-
-        console.log(selectEstablishments.selectedOptions)
     });
 
     function isValidEmail(email) {
@@ -237,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const passwordInput = document.getElementById('password');
 
     loginForm.addEventListener('submit', function (event) {
-        let formIsValid = true; 
+        let formIsValid = true;
 
         document.querySelectorAll('.invalid-feedback').forEach(function (element) {
             element.style.display = 'none';
@@ -257,11 +255,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (!formIsValid) {
-            event.preventDefault(); 
+            event.preventDefault();
         }
 
         function displayErrorMessage(inputElement, message) {
-            const feedbackElement = inputElement.nextElementSibling; 
+            const feedbackElement = inputElement.nextElementSibling;
             feedbackElement.textContent = message;
             feedbackElement.style.display = 'block';
         }
@@ -280,30 +278,26 @@ document.addEventListener('DOMContentLoaded', function () {
     errorDisplay.className = 'text-danger';
     fileInput.parentNode.insertBefore(errorDisplay, fileInput.nextSibling);
 
-    form.addEventListener('submit', function(event) {
+    form.addEventListener('submit', function (event) {
         const file = fileInput.files[0];
-        if (file) { 
+        if (file) {
             const fileName = file.name.toLowerCase();
             const validExtensions = ['.jpg', '.jpeg', '.png'];
+            const maxFileSize = 100 * 1024;
+            console.log("size :", file.size)
 
             if (!validExtensions.some(ext => fileName.endsWith(ext))) {
                 errorDisplay.textContent = 'Seuls les fichiers .jpg, .jpeg ou .png sont autorisés.';
-                event.preventDefault(); 
+                event.preventDefault();
+            } else if (file.size > maxFileSize) {
+                errorDisplay.textContent = 'Le fichier est trop volumineux. La taille maximale autorisée est de 100KB.';
+                event.preventDefault();
             } else {
-                errorDisplay.textContent = ''; 
+                errorDisplay.textContent = '';
             }
         } else {
-            errorDisplay.textContent = ''; 
+            errorDisplay.textContent = 'Veuillez sélectionner un fichier à téléverser.';
+            event.preventDefault();
         }
     });
 });
-
-
-
-
-
-
-
-
-
-

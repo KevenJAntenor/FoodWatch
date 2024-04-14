@@ -108,6 +108,146 @@ class Database:
         result = [{"etablissement": row[0], "infraction_count": row[1]} for row in establishments]
         return result
 
+
+    def verify_user_credentials(self, email, password):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT password, utilisateur_id FROM utilisateurs WHERE email = ?", (email,))
+        user = cursor.fetchone()
+
+        # conn.close()
+
+        if user is not None and user[0] == password:
+            return user[1]
+        else:
+            return None
+        
+    
+    def insert_session(self, session_id, email):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO sessions (id_session, email) VALUES (?, ?)",
+            (session_id, email),
+        )
+        conn.commit()
+
+        conn.close()
+
+    # def get_user_by_session(self, session_id):
+    #     conn = self.get_connection()
+    #     cursor = conn.cursor()
+
+    #     cursor.execute("SELECT nom_complet FROM sessions WHERE id_session = ?", (session_id,))
+    #     user_name = cursor.fetchone()
+
+    #     conn.close()
+
+    #     if user_name:
+    #         return user_name[0]
+    #     else:
+    #         return None
+
+    def delete_session(self, session_id):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM sessions WHERE id_session = ?", (session_id,))
+        conn.commit()
+
+        conn.close()
+
+    def get_user_by_email(self, email):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = "SELECT * FROM utilisateurs WHERE email = ?"
+        cursor.execute(query, (email,))
+        user = cursor.fetchone()
+
+        # conn.close()
+        return user
+    
+    def get_user_by_id(self, user_id):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = "SELECT * FROM utilisateurs WHERE utilisateur_id = ?"
+        cursor.execute(query, (user_id,))
+        user = cursor.fetchone()
+
+        return user
+    
+    def get_user_profile_etablissements(self, user_id):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = "SELECT nom_etablissement FROM utilisateurs_etablissements WHERE utilisateur_id = ?"
+        cursor.execute(query, (user_id,))
+        rows = cursor.fetchall()
+
+        etablissements = [row['nom_etablissement'] for row in rows]
+
+        return etablissements
+
+
+    def insert_user(self, nom_complet, email, password):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = "INSERT INTO utilisateurs (nom_complet, email, password) VALUES (?, ?, ?)"
+        cursor.execute(query, (nom_complet, email, password))
+        conn.commit()
+
+        user_id = cursor.lastrowid
+
+        # conn.close()
+        return user_id
+    
+    def insert_user_establishments(self, user_id, establishment_names):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        for establishment_name in establishment_names:
+            query = "INSERT INTO utilisateurs_etablissements (utilisateur_id, nom_etablissement) VALUES (?, ?)"
+            cursor.execute(query, (user_id, establishment_name))
+
+        conn.commit()
+        conn.close()
+
+    def update_user_establishments(self, user_id, selectedEstablishments):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        delete_query = """
+            DELETE FROM utilisateurs_etablissements
+            WHERE utilisateur_id = ?
+        """
+        cursor.execute(delete_query, (user_id,))
+
+        for establishment in selectedEstablishments:
+            insert_query = """
+                INSERT OR IGNORE INTO utilisateurs_etablissements (utilisateur_id, nom_etablissement)
+                VALUES (?, ?)
+            """
+            cursor.execute(insert_query, (user_id, establishment))
+
+        conn.commit()
+
+
+    def update_user_photo_profile(self, user_id, photo_profil):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        if photo_profil:
+            photo_data = photo_profil.read()
+            update_query = "UPDATE utilisateurs SET photo_profil = ? WHERE utilisateur_id = ?"
+            cursor.execute(update_query, (photo_data, user_id))
+
+        conn.commit()
+
     def insert_inspection_request(self, establishment, address, city, visit_date, last_name, first_name, description):
         conn = self.get_connection()
         cursor = conn.cursor()

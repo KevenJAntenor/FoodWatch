@@ -1,5 +1,6 @@
+import base64
 import uuid
-from flask import Flask, flash, render_template, request, redirect, session, url_for, jsonify, Response
+from flask import Flask, abort, flash, render_template, request, redirect, session, url_for, jsonify, Response
 from database import Database
 from math import ceil
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -12,6 +13,8 @@ from jsonschema import validate, ValidationError
 import json
 
 app = Flask(__name__)
+# cle secrete pour les messages flash
+app.config["SECRET_KEY"] = "secretKey"
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=synchronize_data, trigger="cron", hour=0)
@@ -152,63 +155,47 @@ def create_user_profile():
         user_profile_schema = json.load(schema_file)
 
     if request.method == "GET":
-        establishments = get_establishments()
+        establishments = get_establishments()  
         return render_template("register_new_profile.html", establishments=establishments), 200
     else:
 
+        nom = request.form['nom']
+        courriel = request.form['courriel']
+        mdp = request.form['mdp']
+        selectedEstablishments = request.form['selectedEstablishments']
+
+        request_data = {
+            "nom": nom,
+            "courriel": courriel,
+            "mdp": mdp,
+            "selectedEstablishments": json.loads(str(selectedEstablishments))
+        }
+
         try:
-            validate(instance=request.json, schema=user_profile_schema)
+            validate(instance=request_data, schema=user_profile_schema)
         except ValidationError as e:
             flash("Erreur de validation du document JSON: {}".format(e.message))
             return redirect(url_for("create_user_profile"))
 
-        nom = request.form.get("nom")
-        courriel = request.form.get("courriel")
-        mdp = request.form.get("mdp")
-        selectedEstablishments = request.form.get("selectedEstablishments")
-
         db = Database()
-        conn = db.get_connection()
-        cursor = conn.cursor()
-        existing_user = cursor.execute(
-            "SELECT * FROM utilisateurs WHERE email = ?", (courriel,)
-        ).fetchone()
-
+        existing_user = db.get_user_by_email(courriel)
         if existing_user:
-            flash("Un utilisateur avec cette adresse e-mail existe déjà.")
+            error_message = "Un utilisateur avec cette adresse e-mail existe déjà."
+            flash(error_message)
             return redirect(url_for("create_user_profile"))
 
         try:
-
-            cursor.execute(
-                "INSERT INTO utilisateurs (nom_complet, email, password) VALUES (?, ?, ?)",
-                (nom, courriel, mdp)
-            )
-            conn.commit()
-
-            user_id = cursor.lastrowid
-
+            utilisateur_id = db.insert_user(nom, courriel, mdp)
             selected_establishments = json.loads(selectedEstablishments)
-            for establishment in selected_establishments:
-                cursor.execute(
-                    "INSERT INTO utilisateurs_etablissements (utilisateur_id, nom_etablissement) VALUES (?, ?)",
-                    (user_id, establishment)
-                )
-            conn.commit()
-
-            # flash("Le nouvel utilisateur a été créé avec succès.")
-            return redirect("/user_profile_home") 
+            db.insert_user_establishments(utilisateur_id, selected_establishments)
+            return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
 
         except Exception as e:
-            flash("Une erreur s'est produite lors de la création de l'utilisateur.")
-            print(e) 
-            conn.rollback()
+            error_message = "Une erreur s'est produite lors de la création du profil utilisateur."
+            flash(error_message)
+            print(e)  
 
-        finally:
-            cursor.close()
-            conn.close()
-
-        return render_template("register_new_profile.html")  
+        return render_template("register_new_profile.html") 
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -216,55 +203,76 @@ def login_user():
     if request.method == "GET":
         return render_template("login.html"), 200
     else:
-        # Update the error message for email/password combination
         error_message = "Email and/or Password incorrect!"
         email = request.form["email"]
         password = request.form["password"]
 
-        # Database connection
         db = Database()
-        conn = db.get_connection()
-        cursor = conn.cursor()
 
-        user = cursor.execute(
-            "SELECT password FROM utilisateurs WHERE email = ?", (email,)
-        ).fetchone()
-
-        if user is None:
-            cursor.close()
-            conn.close()
-            flash(error_message)
-            return render_template("login.html", error_message=error_message), 404
-
-        if password == user[0]:
-            # Access granted, create session
+        utilisateur_id = db.verify_user_credentials(email, password)
+        if utilisateur_id:
             id_session = uuid.uuid4().hex
-            cursor.execute(
-                "INSERT INTO sessions (id_session, utilisateur) VALUES (?, ?)",
-                (id_session, email),
-            )
-            conn.commit()
-            cursor.close()
-            conn.close()
+            db.insert_session(id_session, email)  
             session["user"] = id_session
-            return redirect("/user_profile_home")
-
+            return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
         else:
-            cursor.close()
-            conn.close()
             flash(error_message)
             return render_template("login.html", error_message=error_message), 404
         
-@app.route('/user_profile_home')
-def user_profile_home():
-    # db = Database()
-    # conn = db.get_connection()
-    # cursor = conn.cursor()
 
-    # user = cursor.execute(
-    #     "SELECT nom_etablissement FROM utilisateurs_etablissements WHERE utilisateur_id = ?", (email,)
-    # ).fetchone()
-    return render_template('user_profile_home.html')
+@app.route('/user_profile_home/<int:utilisateur_id>', methods=["GET"])
+def user_profile_home(utilisateur_id):
+    db = Database()
+    user = db.get_user_by_id(utilisateur_id)
+
+    if user:
+        establishments = db.get_user_profile_etablissements(utilisateur_id)
+        if user[4]:
+            image_base64 = base64.b64encode(user[4]).decode('utf-8')
+            return render_template('user_profile_home.html', user=user, establishments=establishments, image_base64=image_base64)
+        else:
+            return render_template('user_profile_home.html', user=user, establishments=establishments, image_base64='')
+    else:
+        flash("L'utilisateur avec l'identifiant '" + str(utilisateur_id) + "' n'existe pas !")
+        abort(404)
+
+@app.route('/update_establishments/<int:utilisateur_id>', methods=["POST"])
+def update_establishments(utilisateur_id):
+    try:
+        db = Database()
+        selectedEstablishments = request.form.getlist('selectedEstablishments')  
+        db.update_user_establishments(utilisateur_id, selectedEstablishments)
+        return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
+    except Exception as e:
+        return jsonify({'error': str(e), 'success': False}), 500
+
+
+
+
+@app.route('/upload_profile_pic/<int:utilisateur_id>', methods=["POST"])
+def upload_profile_pic(utilisateur_id):
+    db = Database()
+
+    photo_profil = request.files.get("photo_profil")
+    db.update_user_photo_profile(utilisateur_id, photo_profil)
+
+    flash("Photo de profil mise à jour avec succès !")
+    return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
+
+
+@app.errorhandler(404)
+def retourner404(err):
+    return render_template("erreur.html", err="404"), 404
+
+
+# @app.errorhandler(400)
+# def retourner400(err):
+#     return render_template("erreur.html", err="400"), 400
+
+
+@app.errorhandler(405)
+def retourner500(err):
+    return render_template("erreur.html", err="405"), 405
 
 
 if __name__ == '__main__':
