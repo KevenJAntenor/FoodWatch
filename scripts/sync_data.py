@@ -6,7 +6,7 @@ import smtplib
 from email.mime.text import MIMEText
 import tweepy
 
-from database import Database
+from .database import Database
 
 DATA_URL = ('https://data.montreal.ca/dataset/05a9e718-6810-4e73-8bb9-5955efeb91a0/resource/7f939a08-be8a-45e1-b208'
             '-d8744dca8fc6/download/violations.csv')
@@ -43,7 +43,11 @@ def load_email_config():
         return yaml.safe_load(file)
 
 
-def send_email(subject, body, config, recipient=None):
+def send_email(subject, body, config, recipient=None, token=None, establishment_name=None):
+
+    unsubscribe_link = f"http://127.0.0.1/unsubscribe/{token}?establishment={establishment_name}"
+    body += f"\n\nPour vous désabonner de {establishment_name}, veuillez cliquer sur le lien suivant : {unsubscribe_link}"
+
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = config['sender']
@@ -110,9 +114,9 @@ def synchronize_data():
             post_to_twitter(establishment_names)
 
             for name in establishment_names:
-                emails = Database().get_user_emails_by_establishment_under_surveillance(name)
+                emails_and_tokens = Database().get_user_emails_and_tokens_by_establishment_under_surveillance(name)
                 email_body = "New violation detected at: {}".format(name)
-                for email in emails:
-                    send_email("New Violation Detected", email_body, config, email)
+                for email, token in emails_and_tokens:
+                    send_email("New Violation Detected", email_body, config, recipient=email, token=token, establishment_name=name)
 
     print('Data synchronization complete.')
