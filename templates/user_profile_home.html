@@ -17,6 +17,10 @@ Profile Settings
                     <div class="card profile-card">
                         {% if image_base64 %}
                         <img src="data:image/jpeg;base64,{{ image_base64 }}" class="card-img-top">
+                        {% else %}
+                        <div style="height: 150px; width: 300px; text-align: center;">
+                            <p style="line-height: 300px;">Pas de photo disponible</p>
+                        </div>
                         {% endif %}
                         <div class="card-body">
                             <h5 class="card-title">{{ user.nom_complet }}</h5>
@@ -26,7 +30,7 @@ Profile Settings
 
                 <p class="lead fw-normal text-muted mb-0">Vous pouvez modifier vos établissements à surveiller ou mettre
                     à jour votre photo de profil.</p>
-                <p class="lead fw-normal text-muted mb-0">Faites vos choix en maintenant la touche Ctrl+Click</p>
+                <p class="lead fw-normal text-muted mb-0"><i>Faites vos choix en maintenant la touche Ctrl+Click</i></p>
             </div>
 
             <div class="row gx-5 justify-content-center">

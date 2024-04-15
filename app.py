@@ -1,7 +1,7 @@
 import base64
 import uuid
 from flask import Flask, abort, flash, render_template, request, redirect, session, url_for, jsonify, Response
-from database import Database
+from scripts.database import Database
 from math import ceil
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
@@ -156,7 +156,7 @@ def create_user_profile():
 
     if request.method == "GET":
         establishments = get_establishments()  
-        return render_template("register_new_profile.html", establishments=establishments), 200
+        return render_template("create_new_profile.html", establishments=establishments), 200
     else:
 
         nom = request.form['nom']
@@ -174,15 +174,15 @@ def create_user_profile():
         try:
             validate(instance=request_data, schema=user_profile_schema)
         except ValidationError as e:
-            flash("Erreur de validation du document JSON: {}".format(e.message))
-            return redirect(url_for("create_user_profile"))
+            error_message ="Erreur de validation du document JSON: {}".format(e.message)
+            return render_template("create_new_profile.html", establishments=establishments), 00
+
 
         db = Database()
         existing_user = db.get_user_by_email(courriel)
         if existing_user:
             error_message = "Un utilisateur avec cette adresse e-mail existe déjà."
-            flash(error_message)
-            return redirect(url_for("create_user_profile"))
+            return render_template("create_new_profile.html", error_message=error_message),409
 
         try:
             utilisateur_id = db.insert_user(nom, courriel, mdp)
@@ -192,10 +192,7 @@ def create_user_profile():
 
         except Exception as e:
             error_message = "Une erreur s'est produite lors de la création du profil utilisateur."
-            flash(error_message)
-            print(e)  
-
-        return render_template("register_new_profile.html") 
+            return render_template("create_new_profile.html", error_message=error_message),409
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -216,7 +213,6 @@ def login_user():
             session["user"] = id_session
             return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
         else:
-            flash(error_message)
             return render_template("login.html", error_message=error_message), 404
         
 
@@ -227,14 +223,14 @@ def user_profile_home(utilisateur_id):
 
     if user:
         establishments = db.get_user_profile_etablissements(utilisateur_id)
-        if user[4]:
-            image_base64 = base64.b64encode(user[4]).decode('utf-8')
+        if user[5]:
+            image_base64 = base64.b64encode(user[5]).decode('utf-8')
             return render_template('user_profile_home.html', user=user, establishments=establishments, image_base64=image_base64)
         else:
             return render_template('user_profile_home.html', user=user, establishments=establishments, image_base64='')
     else:
-        flash("L'utilisateur avec l'identifiant '" + str(utilisateur_id) + "' n'existe pas !")
-        abort(404)
+        error_message = "L'utilisateur avec l'identifiant '" + str(utilisateur_id) + "' n'existe pas !"
+        abort(404, error_message)
 
 @app.route('/update_establishments/<int:utilisateur_id>', methods=["POST"])
 def update_establishments(utilisateur_id):
@@ -242,6 +238,8 @@ def update_establishments(utilisateur_id):
         db = Database()
         selectedEstablishments = request.form.getlist('selectedEstablishments')  
         db.update_user_establishments(utilisateur_id, selectedEstablishments)
+
+        flash("Mise à jour des vos établissements effectuée !")
         return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
     except Exception as e:
         return jsonify({'error': str(e), 'success': False}), 500
@@ -251,28 +249,47 @@ def update_establishments(utilisateur_id):
 
 @app.route('/upload_profile_pic/<int:utilisateur_id>', methods=["POST"])
 def upload_profile_pic(utilisateur_id):
-    db = Database()
+    try:
+        db = Database()
 
-    photo_profil = request.files.get("photo_profil")
-    db.update_user_photo_profile(utilisateur_id, photo_profil)
+        photo_profil = request.files.get("photo_profil")
+        db.update_user_photo_profile(utilisateur_id, photo_profil)
 
-    flash("Photo de profil mise à jour avec succès !")
-    return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
+        flash("Photo de profil mise à jour avec succès !")
+        return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
+    except Exception as e:
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/unsubscribe/<token>', methods=['GET', 'POST'])
+def unsubscribe(token):
+    try:
+        token = request.args.get('token')
+        establishment = request.args.get('establishment')
+        if request.method == "GET":
+            return render_template("unsubscribe.html", establishment=establishment), 200
+        else:
+            db = Database()
+            db.delete_establishment_from_user_establishments(token, establishment)
+            message =  "You have been unsubscribed from {}.\nIt's no longer under your surveillance.".format(establishment)
+            return jsonify({'message': message}), 200
+    except Exception as e:
+        return jsonify({'error': str(e), 'success': False}), 500
+
 
 
 @app.errorhandler(404)
 def retourner404(err):
-    return render_template("erreur.html", err="404"), 404
+    return render_template("erreur.html", err="404", error_message=err), 404
 
 
-# @app.errorhandler(400)
-# def retourner400(err):
-#     return render_template("erreur.html", err="400"), 400
+@app.errorhandler(400)
+def retourner400(err):
+    return render_template("erreur.html", err="400", error_message=err), 400
 
 
 @app.errorhandler(405)
 def retourner500(err):
-    return render_template("erreur.html", err="405"), 405
+    return render_template("erreur.html", err="405", error_message=err), 405
 
 
 if __name__ == '__main__':

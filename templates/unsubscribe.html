@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}
+Profile Settings
+{% endblock %}
+
+{% block content %}
+
+<div class="confirmation-container">
+    <h1>Confirmation de désinscription</h1>
+    <p>Voulez-vous vraiment vous désabonner du restaurant <strong>{{ establishment }}</strong> ?</p>
+    <button id="confirm-unsubscribe" class="btn btn-danger">Confirmer la désinscription</button>
+</div>
+
+<script>
+    document.getElementById('confirm-unsubscribe').addEventListener('click', function() {
+        var token = "{{ token }}";
+        var establishment = "{{ establishment }}";
+        
+        fetch('/unsubscribe/' + token, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ establishment: establishment })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert(data.message);
+                window.location.href = '/';
+            } else {
+                alert('An error occurred: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('An error occurred: ' + error);
+        });
+    });
+</script>
+
+{% endblock %}

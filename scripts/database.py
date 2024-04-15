@@ -1,3 +1,4 @@
+import secrets
 import sqlite3
 
 
@@ -192,28 +193,29 @@ class Database:
 
         return etablissements
 
-    def get_user_emails_by_establishment_under_surveillance(self, establishment_name):
+    def get_user_emails_and_tokens_by_establishment_under_surveillance(self, establishment_name):
         with self.connection.cursor() as cursor:
             cursor.execute("""
-                SELECT u.email
+                SELECT u.email, u.token
                 FROM utilisateurs u
                 JOIN utilisateurs_etablissements ue ON u.utilisateur_id = ue.utilisateur_id
                 WHERE ue.nom_etablissement = ?
             """, (establishment_name,))
-            return [row[0] for row in cursor.fetchall()]
+            return cursor.fetchall()
         
 
     def insert_user(self, nom_complet, email, password):
         conn = self.get_connection()
         cursor = conn.cursor()
 
-        query = "INSERT INTO utilisateurs (nom_complet, email, password) VALUES (?, ?, ?)"
-        cursor.execute(query, (nom_complet, email, password))
+        token = secrets.token_urlsafe(16)
+
+        query = "INSERT INTO utilisateurs (nom_complet, email, password, token) VALUES (?, ?, ?, ?)"
+        cursor.execute(query, (nom_complet, email, password, token))
         conn.commit()
 
         user_id = cursor.lastrowid
 
-        # conn.close()
         return user_id
     
     def insert_user_establishments(self, user_id, establishment_names):
@@ -243,6 +245,30 @@ class Database:
                 VALUES (?, ?)
             """
             cursor.execute(insert_query, (user_id, establishment))
+
+        conn.commit()
+
+
+    def delete_establishment_from_user_establishments(self, token, establishment):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        user_id_query = """
+            SELECT utilisateur_id FROM utilisateurs WHERE token = ?
+        """
+        cursor.execute(user_id_query, (token,))
+        user_id = cursor.fetchone()
+        if user_id:
+            user_id = user_id[0]  
+        else:
+            raise Exception("Token is incorrect or expired !")
+
+        delete_query = """
+            DELETE FROM utilisateurs_etablissements
+            WHERE utilisateur_id = ?
+            AND nom_etablissement = ?
+        """
+        cursor.execute(delete_query, (user_id, establishment))
 
         conn.commit()
 

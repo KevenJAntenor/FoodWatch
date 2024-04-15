@@ -10,6 +10,12 @@ New profile
                 <div class="feature bg-primary bg-gradient text-white rounded-3 mb-3">
                     <i class="bi bi-calendar-plus"></i>
                 </div>
+                {% if error_message %}
+
+                <div class="p-2">
+                    <p class="text-danger fw-light"> {{ error_message }} </p>
+                </div>
+                {% endif %}
                 <h1 class="fw-bolder">Créez-vous un profil utilisateur</h1>
                 <p class="lead fw-normal text-muted mb-0">Remplissez les informations ci-dessous</p>
             </div>
