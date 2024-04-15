@@ -295,3 +295,14 @@ class Database:
         """
         cursor.execute(query, (establishment, address, city, visit_date, last_name, first_name, description))
         conn.commit()
+
+    def delete_inspection_request(self, request_id):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM inspection_requests WHERE id = ?", (request_id,))
+        conn.commit()
+        conn.close()
+
+        return True 
+

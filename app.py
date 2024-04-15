@@ -142,6 +142,22 @@ def demande_inspection():
         return jsonify({"message": "Demande d'inspection reçue avec succès."}), 200
     except ValidationError as e:
         return jsonify({"error": str(e)}), 400
+    
+@app.route('/demande_inspection/<int:request_id>', methods=['DELETE'])
+def delete_demande_inspection(request_id):
+    if request.method == "DELETE":
+        db = Database()
+        try:
+            result = db.delete_inspection_request(request_id)
+            if result:
+                return jsonify({"message": "La demande d'inspection a été supprimée avec succès."}), 200
+            else:
+                return jsonify({"error": "Demande d'inspection non trouvée."}), 404
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        abort(400)
+
 
 
 @app.route('/complaint')
