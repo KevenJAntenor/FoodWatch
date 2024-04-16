@@ -1,4 +1,5 @@
 import base64
+from functools import wraps
 import uuid
 from flask import Flask, abort, flash, render_template, request, redirect, session, url_for, jsonify, Response
 from scripts.database import Database
@@ -21,6 +22,29 @@ scheduler.add_job(func=synchronize_data, trigger="cron", hour=0)
 scheduler.start()
 
 atexit.register(lambda: scheduler.shutdown())
+
+@app.context_processor
+def context_processor():
+    return {'is_authenticated': is_authenticated()}
+
+
+
+def authenticated_only(route_function):
+    @wraps(route_function)
+    def wrapper(*args, **kwargs):
+        if is_authenticated():
+            return route_function(*args, **kwargs)
+        else:
+            flash("Connectez-vous pour acceder a cette page !", "info")
+            return render_template("index.html"), 401
+
+    return wrapper
+
+
+def is_authenticated():
+    return 'user' in session
+
+
 
 
 @app.route('/contrevenants', methods=['GET'])
@@ -191,7 +215,8 @@ def create_user_profile():
             validate(instance=request_data, schema=user_profile_schema)
         except ValidationError as e:
             error_message ="Erreur de validation du document JSON: {}".format(e.message)
-            return render_template("create_new_profile.html", establishments=establishments), 00
+            return jsonify({'error': str(error_message), 'success': False}), 500
+            # return render_template("create_new_profile.html", establishments=establishments), 00
 
 
         db = Database()
@@ -231,8 +256,19 @@ def login_user():
         else:
             return render_template("login.html", error_message=error_message), 404
         
+@app.route("/logout")
+@authenticated_only
+def logout_user():
+    if "user" in session:
+        session_id = session["user"]
+        db = Database()
+        db.delete_session(session_id)
+        session.pop("user", None)
+        return redirect(url_for('login_user'))
+
 
 @app.route('/user_profile_home/<int:utilisateur_id>', methods=["GET"])
+@authenticated_only
 def user_profile_home(utilisateur_id):
     db = Database()
     user = db.get_user_by_id(utilisateur_id)
@@ -249,6 +285,7 @@ def user_profile_home(utilisateur_id):
         abort(404, error_message)
 
 @app.route('/update_establishments/<int:utilisateur_id>', methods=["POST"])
+@authenticated_only
 def update_establishments(utilisateur_id):
     try:
         db = Database()
@@ -264,6 +301,7 @@ def update_establishments(utilisateur_id):
 
 
 @app.route('/upload_profile_pic/<int:utilisateur_id>', methods=["POST"])
+@authenticated_only
 def upload_profile_pic(utilisateur_id):
     try:
         db = Database()
