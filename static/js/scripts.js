@@ -178,6 +178,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (mdp.value.trim() === '') {
             document.getElementById('errMdp').textContent = 'Veuillez entrer votre mot de passe.';
             isValid = false;
+        } else if (mdp.value.trim().length < 8 || !/\d/.test(mdp.value.trim())) {
+            document.getElementById('errMdp').textContent = 'Le mot de passe doit contenir au moins 8 caractères avec au moins 1 chiffre.';
+            isValid = false;
         }
 
         if (mdpConf.value.trim() === '') {

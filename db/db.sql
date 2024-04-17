@@ -30,10 +30,12 @@ CREATE TABLE IF NOT EXISTS utilisateurs (
     utilisateur_id INTEGER PRIMARY KEY AUTOINCREMENT,
     nom_complet VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    hashed_password VARCHAR(255) NOT NULL,
+    salt VARCHAR(255) NOT NULL,
     token VARCHAR(255),
     photo_profil BLOB
 );
+
 
 CREATE TABLE IF NOT EXISTS utilisateurs_etablissements (
     utilisateur_id INT,

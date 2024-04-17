@@ -108,21 +108,6 @@ class Database:
         establishments = cursor.fetchall()
         result = [{"etablissement": row[0], "infraction_count": row[1]} for row in establishments]
         return result
-
-
-    def verify_user_credentials(self, email, password):
-        conn = self.get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT password, utilisateur_id FROM utilisateurs WHERE email = ?", (email,))
-        user = cursor.fetchone()
-
-        # conn.close()
-
-        if user is not None and user[0] == password:
-            return user[1]
-        else:
-            return None
         
     
     def insert_session(self, session_id, email):
@@ -135,21 +120,6 @@ class Database:
         )
         conn.commit()
 
-        conn.close()
-
-    # def get_user_by_session(self, session_id):
-    #     conn = self.get_connection()
-    #     cursor = conn.cursor()
-
-    #     cursor.execute("SELECT nom_complet FROM sessions WHERE id_session = ?", (session_id,))
-    #     user_name = cursor.fetchone()
-
-    #     conn.close()
-
-    #     if user_name:
-    #         return user_name[0]
-    #     else:
-    #         return None
 
     def delete_session(self, session_id):
         conn = self.get_connection()
@@ -160,6 +130,25 @@ class Database:
 
         conn.close()
 
+    def get_user_id_by_session(self, session_id):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = """
+        SELECT utilisateur_id
+        FROM sessions
+        JOIN utilisateurs ON sessions.email = utilisateurs.email
+        WHERE id_session = ?
+        """
+        cursor.execute(query, (session_id,))
+        row = cursor.fetchone()
+        
+        user_id = row[0] if row else None
+
+        conn.close()
+
+        return user_id
+
     def get_user_by_email(self, email):
         conn = self.get_connection()
         cursor = conn.cursor()
@@ -168,7 +157,6 @@ class Database:
         cursor.execute(query, (email,))
         user = cursor.fetchone()
 
-        # conn.close()
         return user
     
     def get_user_by_id(self, user_id):
@@ -204,14 +192,14 @@ class Database:
             return cursor.fetchall()
         
 
-    def insert_user(self, nom_complet, email, password):
+    def insert_user(self, nom_complet, email, salt, hashed_password):
         conn = self.get_connection()
         cursor = conn.cursor()
 
         token = secrets.token_urlsafe(16)
 
-        query = "INSERT INTO utilisateurs (nom_complet, email, password, token) VALUES (?, ?, ?, ?)"
-        cursor.execute(query, (nom_complet, email, password, token))
+        query = "INSERT INTO utilisateurs (nom_complet, email, hashed_password, salt, token) VALUES (?, ?, ?, ?, ?)"
+        cursor.execute(query, (nom_complet, email, hashed_password, salt, token))
         conn.commit()
 
         user_id = cursor.lastrowid
@@ -227,7 +215,6 @@ class Database:
             cursor.execute(query, (user_id, establishment_name))
 
         conn.commit()
-        conn.close()
 
     def update_user_establishments(self, user_id, selectedEstablishments):
         conn = self.get_connection()

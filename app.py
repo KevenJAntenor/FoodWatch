@@ -1,5 +1,6 @@
 import base64
 from functools import wraps
+import hashlib
 import uuid
 from flask import Flask, abort, flash, render_template, request, redirect, session, url_for, jsonify, Response
 from scripts.database import Database
@@ -226,9 +227,18 @@ def create_user_profile():
             return render_template("create_new_profile.html", error_message=error_message),409
 
         try:
-            utilisateur_id = db.insert_user(nom, courriel, mdp)
             selected_establishments = json.loads(selectedEstablishments)
+
+            salt = uuid.uuid4().hex
+            hashed_password = hashlib.sha512(str(mdp + salt).encode("utf-8")).hexdigest() 
+
+            utilisateur_id = db.insert_user(nom, courriel, salt, hashed_password)
+            
+            id_session = get_user_id_session()
+
+            db.insert_session(id_session, courriel)  
             db.insert_user_establishments(utilisateur_id, selected_establishments)
+
             return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
 
         except Exception as e:
@@ -239,7 +249,11 @@ def create_user_profile():
 @app.route("/login", methods=["GET", "POST"])
 def login_user():
     if request.method == "GET":
-        return render_template("login.html"), 200
+        if "user" not in session:
+            return render_template("login.html"), 200
+        flash("Vous etes deja connecté ! ")
+        utilisateur_id = get_user_id()
+        return redirect(url_for('user_profile_home', utilisateur_id = utilisateur_id))
     else:
         error_message = "Email and/or Password incorrect!"
         email = request.form["email"]
@@ -247,14 +261,25 @@ def login_user():
 
         db = Database()
 
-        utilisateur_id = db.verify_user_credentials(email, password)
-        if utilisateur_id:
-            id_session = uuid.uuid4().hex
-            db.insert_session(id_session, email)  
-            session["user"] = id_session
-            return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
-        else:
-            return render_template("login.html", error_message=error_message), 404
+        user = db.get_user_by_email(email)
+
+        if user:
+            hashed_password = hashlib.sha512(str(password + user[4]).encode("utf-8")).hexdigest() 
+            if user[3] == hashed_password:
+                utilisateur_id = user[2]
+                if utilisateur_id:
+                    id_session = get_user_id_session()
+                    db.insert_session(id_session, email)  
+
+                    return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
+
+        return render_template("login.html", error_message=error_message), 404
+
+
+def get_user_id_session():
+    id_session = uuid.uuid4().hex
+    session["user"] = id_session
+    return id_session
         
 @app.route("/logout")
 @authenticated_only
@@ -267,6 +292,18 @@ def logout_user():
         return redirect(url_for('login_user'))
 
 
+def get_user_id():
+    if "user" in session:
+        session_id = session["user"]
+        db = Database()
+        utilisateur_id = db.get_user_id_by_session(session_id)
+        if utilisateur_id:
+            return utilisateur_id
+        else:
+            return redirect(url_for('logout_user'))
+            
+
+
 @app.route('/user_profile_home/<int:utilisateur_id>', methods=["GET"])
 @authenticated_only
 def user_profile_home(utilisateur_id):
@@ -275,8 +312,8 @@ def user_profile_home(utilisateur_id):
 
     if user:
         establishments = db.get_user_profile_etablissements(utilisateur_id)
-        if user[5]:
-            image_base64 = base64.b64encode(user[5]).decode('utf-8')
+        if user[6]:
+            image_base64 = base64.b64encode(user[6]).decode('utf-8')
             return render_template('user_profile_home.html', user=user, establishments=establishments, image_base64=image_base64)
         else:
             return render_template('user_profile_home.html', user=user, establishments=establishments, image_base64='')
