@@ -22,10 +22,28 @@ document.addEventListener('DOMContentLoaded', function () {
                     const row = `<tr>
                                     <td>${violation.etablissement}</td>
                                     <td>${violation.count}</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm edit-btn" data-id="${violation.id}">Edit</button>
+                                        <button class="btn btn-danger btn-sm delete-btn" data-id="${violation.id}">Delete</button>
+                                    </td>
                                  </tr>`;
                     resultsBody.innerHTML += row;
                 });
                 resultsTable.style.display = 'table';
+
+                document.querySelectorAll('.edit-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        console.log('Edit function not implemented yet.');
+                        alert('Edit function not implemented yet.');
+                    });
+                });
+
+                document.querySelectorAll('.delete-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        console.log('Delete function not implemented yet.');
+                        alert('Delete function not implemented yet.');
+                    });
+                });
             })
             .catch(error => console.error('Error fetching data:', error));
     });
