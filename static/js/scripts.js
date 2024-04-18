@@ -19,12 +19,14 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 resultsBody.innerHTML = '';
                 data.forEach(violation => {
-                    const row = `<tr>
-                                    <td>${violation.etablissement}</td>
-                                    <td>${violation.count}</td>
+                    const row = `<tr data-id="${violation.id}">
+                                    <td contenteditable="false" class="editable etablissement">${violation.etablissement}</td>
+                                    <td contenteditable="false" >${violation.count}</td>
                                     <td>
-                                        <button class="btn btn-primary btn-sm edit-btn" data-id="${violation.id}">Edit</button>
-                                        <button class="btn btn-danger btn-sm delete-btn" data-id="${violation.id}">Delete</button>
+                                        <button class="btn btn-primary btn-sm edit-btn">Edit</button>
+                                        <button class="btn btn-danger btn-sm delete-btn">Delete</button>
+                                        <button class="btn btn-success btn-sm save-btn" style="display:none;">Save</button>
+                                        <button class="btn btn-warning btn-sm cancel-btn" style="display:none;">Cancel</button>
                                     </td>
                                  </tr>`;
                     resultsBody.innerHTML += row;
@@ -33,15 +35,98 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 document.querySelectorAll('.edit-btn').forEach(button => {
                     button.addEventListener('click', function() {
-                        console.log('Edit function not implemented yet.');
-                        alert('Edit function not implemented yet.');
+                        const tr = button.closest('tr');
+                        tr.dataset.originalEtablissement = tr.querySelector('.etablissement').textContent;
+                        // tr.dataset.originalCount = tr.querySelector('.count').textContent;
+
+                        tr.querySelectorAll('.editable').forEach(td => {
+                            td.contentEditable = true;
+                        });
+                        tr.querySelector('.save-btn').style.display = '';
+                        tr.querySelector('.cancel-btn').style.display = '';
+                        button.style.display = 'none';
+                    });
+                });
+
+                document.querySelectorAll('.save-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const tr = button.closest('tr');
+                        const id = tr.dataset.id;
+                        const originalEtablissement = tr.dataset.originalEtablissement;
+                        const new_etablissement = tr.querySelector('.etablissement').textContent;
+                    
+                        fetch('/update_establishment/' + originalEtablissement, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({new_etablissement, originalEtablissement})
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(data => {
+                                    alert(data.message);
+                                    throw new Error('Server responded with status: ' + response.status);
+                                });
+                            }else{
+                                return response.json().then(data => {
+                                    alert(data.message);
+                                });
+                            }
+                        })
+                        .then(data => {
+                            console.log(data.error); 
+                        })
+                        .catch(error => {
+                            console.error('Error updating data:', error);
+                            
+                            tr.querySelector('.etablissement').textContent = tr.dataset.originalEtablissement;
+                        });
+                    
+                        tr.querySelectorAll('.editable').forEach(td => {
+                            td.contentEditable = false;
+                        });
+                        tr.querySelector('.edit-btn').style.display = '';
+                        button.style.display = 'none';
+                        tr.querySelector('.cancel-btn').style.display = 'none';
+                    });
+                    
+                });
+
+                document.querySelectorAll('.cancel-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const tr = button.closest('tr');
+                        tr.querySelector('.etablissement').textContent = tr.dataset.originalEtablissement;
+
+                        tr.querySelectorAll('.editable').forEach(td => {
+                            td.contentEditable = false;
+                        });
+                        tr.querySelector('.edit-btn').style.display = '';
+                        tr.querySelector('.save-btn').style.display = 'none';
+                        button.style.display = 'none';
                     });
                 });
 
                 document.querySelectorAll('.delete-btn').forEach(button => {
                     button.addEventListener('click', function() {
-                        console.log('Delete function not implemented yet.');
-                        alert('Delete function not implemented yet.');
+                        const tr = button.closest('tr');
+                        const id = tr.dataset.id;
+                        const etablissement = tr.querySelector('.etablissement').textContent;
+
+
+                        fetch('/delete_establishment/' + etablissement, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({id, etablissement})
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data.message); // Handle success message
+                            tr.remove(); // Remove the row from the table
+                        })
+                        .catch(error => console.error('Error deleting data:', error));
                     });
                 });
             })

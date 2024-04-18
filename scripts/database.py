@@ -283,13 +283,28 @@ class Database:
         cursor.execute(query, (establishment, address, city, visit_date, last_name, first_name, description))
         conn.commit()
 
-    def delete_inspection_request(self, request_id):
+    def delete_etablissement(self, etablissement):
         conn = self.get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("DELETE FROM inspection_requests WHERE id = ?", (request_id,))
+        cursor.execute("DELETE FROM inspection_requests WHERE etablissement = ?", (etablissement,))
         conn.commit()
         conn.close()
 
         return True 
+    
+    def update_etablissement_name(self, etablissement, new_etablissement):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("UPDATE violations SET etablissement = ? WHERE etablissement = ?", (new_etablissement, etablissement))
+
+            cursor.execute("UPDATE inspection_requests SET nom_etablissement = ? WHERE nom_etablissement = ?", (new_etablissement, etablissement))
+            cursor.execute("UPDATE utilisateurs_etablissements SET nom_etablissement = ? WHERE nom_etablissement = ?", (new_etablissement, etablissement))
+
+            conn.commit()
+        finally:
+            conn.close()
+
 

@@ -61,6 +61,38 @@ def get_violations_between_dates():
 
     return jsonify(violations)
 
+@app.route('/update_establishment/<string:etablissement>', methods=['POST'])
+def save_establishment(etablissement):
+    new_etablissement = request.json.get('new_etablissement')
+    if not new_etablissement:
+        return jsonify({'error': 'New establishment name is required.'}), 400
+
+    db = Database()
+    try:
+        db.update_etablissement_name(etablissement, new_etablissement)
+        return jsonify({"message": "Etablissement name updated successfully."}), 200
+    except Exception as e:
+        message = "Failed : An error occurred while trying to update the establishment name."
+        return jsonify({"message": message}), 500
+    
+@app.route('/delete_establishment/<string:etablissement>', methods=['POST'])
+def delete_inspection_request(etablissement):
+    if request.method == 'POST':
+        try:
+            db = Database()
+            result = db.delete_etablissement(etablissement)
+            if result:
+                flash(str(etablissement) + "deleted successfully!", "success")
+                return redirect(url_for('index'))
+            else:
+                flash(str(etablissement) + "not found.", "error")
+                return redirect(url_for('index'))
+        except Exception as e:
+            flash(f"Error while deleting {str(etablissement)} : {str(e)}", "error")
+            return redirect(url_for('index'))
+    else:
+        abort(400)
+
 
 @app.route('/doc')
 def documentation():
