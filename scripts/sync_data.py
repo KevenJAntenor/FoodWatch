@@ -75,7 +75,13 @@ def detect_new_violations(reader, conn):
         violation_date_int = int(row['date'])
 
         if violation_date_int > last_import_date_int:
-            new_violations.append(row)
+            # Check if the id_poursuite and business_id already exist in the database
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM violations WHERE id_poursuite = ? AND business_id = ?",
+                           (row['id_poursuite'], row['business_id']))
+            count = cursor.fetchone()[0]
+            if count == 0:
+                new_violations.append(row)
 
     return new_violations
 
