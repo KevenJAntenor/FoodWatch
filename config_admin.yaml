@@ -1,0 +1,4 @@
+nom_complet: "Admin User"
+email: "admin@super.com"
+password: "admin1234"
+salt: "admin_salt"

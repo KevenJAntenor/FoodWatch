@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}
+Profile Settings
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container px-5">
+        <div class="bg-light rounded-3 py-5 px-4 px-md-5 mb-5">
+            <div class="text-center mb-5">
+                <div class="feature bg-primary bg-gradient text-white rounded-3 mb-3">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <h1 class="fw-bolder">Mon Profil</h1>
+                <div class="col-md-4">
+                    <div class="card profile-card">
+                        {% if image_base64 %}
+                        <img src="data:image/jpeg;base64,{{ image_base64 }}" class="card-img-top">
+                        {% else %}
+                        <div style="height: 150px; width: 300px; text-align: center;">
+                            <p style="line-height: 300px;">Pas de photo disponible</p>
+                        </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ user.nom_complet }}</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="lead fw-normal text-muted mb-0">Vous pouvez modifier vos établissements à surveiller ou mettre
+                    à jour votre photo de profil.</p>
+                <p class="lead fw-normal text-muted mb-0"><i>Faites vos choix en maintenant la touche Ctrl+Click</i></p>
+            </div>
+
+            <div class="row gx-5 justify-content-center">
+                <div class="col-lg-8 col-xl-6">
+                    <form id="establishment-form" method="POST"
+                        action="/update_establishments/{{ user.utilisateur_id }}" novalidate>
+                        <div class="mb-3">
+                            <select multiple class="form-control" id="select-establishments"
+                                name="selectedEstablishments" required style="height: 400px;">
+                                <optgroup label="Établissements à surveiller:">
+                                    {% for establishment in establishments %}
+                                    <option value="{{ establishment }}" {% if establishment in establishments
+                                        %}selected{% endif %}>{{ establishment }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                            <div class="p-2">
+                                <p id="errSelect" class="text-danger fw-light"></p>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <form id="profile-pic-form" method="POST" action="/upload_profile_pic/{{ user.utilisateur_id }}"
+                        enctype="multipart/form-data" novalidate>
+                        <div class="mb-3">
+                            <label for="profilePic" class="form-label">Photo de profil:</label>
+                            <input type="file" class="form-control" id="profilePic" name="photo_profil"
+                                accept=".jpg, .jpeg, .png" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Téléverser</button>
+                        <button type="reset" class="btn btn-primary">Supprimer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const establishmentForm = document.getElementById('establishment-form');
+        const selectEstablishments = document.getElementById('select-establishments');
+
+        establishmentForm.addEventListener('submit', function (event) {
+            const formData = new FormData(establishmentForm);
+            const selectedOptions = Array.from(selectEstablishments.selectedOptions).map(option => option.value);
+            console.log(selectedOptions);
+
+            formData.append('selectedEstablishments', JSON.stringify(selectedOptions));
+        });
+
+    });
+</script>
+{% endblock %}

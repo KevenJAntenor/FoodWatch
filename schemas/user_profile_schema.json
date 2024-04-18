@@ -1,0 +1,14 @@
+{
+    "type": "object",
+    "properties": {
+      "nom": {"type": "string"},
+      "courriel": {"type": "string", "format": "email"},
+      "mdp": {"type": "string"},
+      "selectedEstablishments": {
+        "type": "array",
+        "items": {"type": "string"}
+      }
+    },
+    "required": ["nom", "courriel", "mdp", "selectedEstablishments"]
+  }
+  
