@@ -43,9 +43,21 @@ def authenticated_only(route_function):
 
 
 def is_authenticated():
-    return 'user' in session
+    return 'user' in session or 'admin' in session
 
 
+def admin_only(route_function):
+    @wraps(route_function)
+    def wrapper(*args, **kwargs):
+        if is_admin():
+            return route_function(*args, **kwargs)
+        else:
+            flash("Connectez-vous en tant qu'administrateur pour accéder à cette page !", "info")
+            return render_template("index.html"), 401
+    return wrapper
+
+def is_admin():
+    return 'admin' in session
 
 
 @app.route('/contrevenants', methods=['GET'])
@@ -63,17 +75,20 @@ def get_violations_between_dates():
 
 @app.route('/update_establishment/<string:etablissement>', methods=['POST'])
 def save_establishment(etablissement):
-    new_etablissement = request.json.get('new_etablissement')
-    if not new_etablissement:
-        return jsonify({'error': 'New establishment name is required.'}), 400
+    if request.method == 'POST':
+        new_etablissement = request.json.get('new_etablissement')
+        if not new_etablissement:
+            return jsonify({'error': 'New establishment name is required.'}), 400
 
-    db = Database()
-    try:
-        db.update_etablissement_name(etablissement, new_etablissement)
-        return jsonify({"message": "Etablissement name updated successfully."}), 200
-    except Exception as e:
-        message = "Failed : An error occurred while trying to update the establishment name."
-        return jsonify({"message": message}), 500
+        db = Database()
+        try:
+            db.update_etablissement_name(etablissement, new_etablissement)
+            return jsonify({"message": "Etablissement name updated successfully."}), 200
+        except Exception as e:
+            message = "Failed : An error occurred while trying to update the establishment name."
+            return jsonify({"message": message}), 500
+    else:
+        abort(400)
     
 @app.route('/delete_establishment/<string:etablissement>', methods=['POST'])
 def delete_inspection_request(etablissement):
@@ -82,14 +97,13 @@ def delete_inspection_request(etablissement):
             db = Database()
             result = db.delete_etablissement(etablissement)
             if result:
-                flash(str(etablissement) + "deleted successfully!", "success")
-                return redirect(url_for('index'))
+                return jsonify({"message": str(etablissement) + " deleted successfully!"}), 200
             else:
-                flash(str(etablissement) + "not found.", "error")
-                return redirect(url_for('index'))
+                return jsonify({"message": str(etablissement) + " not found."}), 504
+
         except Exception as e:
-            flash(f"Error while deleting {str(etablissement)} : {str(e)}", "error")
-            return redirect(url_for('index'))
+            message = "Failed : An error occurred while trying to update the establishment name."
+            return jsonify({"message": message}), 500
     else:
         abort(400)
 
@@ -300,17 +314,21 @@ def login_user():
             if user[3] == hashed_password:
                 utilisateur_id = user[2]
                 if utilisateur_id:
-                    id_session = get_user_id_session()
-                    db.insert_session(id_session, email)  
+                    if user[1] == 'admin':
+                        id_session = get_user_id_session("admin")
+                        db.insert_session(id_session, email)  
+                    else:
+                        id_session = get_user_id_session("user")
+                        db.insert_session(id_session, email)  
 
                     return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
 
         return render_template("login.html", error_message=error_message), 404
 
 
-def get_user_id_session():
+def get_user_id_session(role):
     id_session = uuid.uuid4().hex
-    session["user"] = id_session
+    session[role] = id_session
     return id_session
         
 @app.route("/logout")

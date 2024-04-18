@@ -287,11 +287,17 @@ class Database:
         conn = self.get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("DELETE FROM inspection_requests WHERE etablissement = ?", (etablissement,))
+        cursor.execute("DELETE FROM violations WHERE etablissement = ?", (etablissement,))
+
+        cursor.execute("DELETE FROM inspection_requests WHERE nom_etablissement = ?", (etablissement,))
+
+        cursor.execute("DELETE FROM utilisateurs_etablissements WHERE nom_etablissement = ?", (etablissement,))
+
         conn.commit()
         conn.close()
 
-        return True 
+        return True
+
     
     def update_etablissement_name(self, etablissement, new_etablissement):
         conn = self.get_connection()

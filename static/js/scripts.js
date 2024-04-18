@@ -119,12 +119,24 @@ document.addEventListener('DOMContentLoaded', function () {
                             headers: {
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({id, etablissement})
+                            body: JSON.stringify({etablissement})
                         })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(data => {
+                                    alert(data.message);
+                                    throw new Error('Server responded with status: ' + response.status);
+                                });
+                            }else{
+                                return response.json().then(data => {
+                                    alert(data.message);
+                                    tr.remove(); // Remove the row from the table
+
+                                });
+                            }
+                        })
                         .then(data => {
-                            console.log(data.message); // Handle success message
-                            tr.remove(); // Remove the row from the table
+                            console.log(data.message); 
                         })
                         .catch(error => console.error('Error deleting data:', error));
                     });
