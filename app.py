@@ -26,8 +26,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.context_processor
 def context_processor():
-    return {'is_authenticated': is_authenticated()}
-
+    return {'is_authenticated': is_authenticated(), 'is_admin_authenticated': is_admin()}
 
 
 def authenticated_only(route_function):
@@ -74,6 +73,7 @@ def get_violations_between_dates():
     return jsonify(violations)
 
 @app.route('/update_establishment/<string:etablissement>', methods=['POST'])
+@admin_only
 def save_establishment(etablissement):
     if request.method == 'POST':
         new_etablissement = request.json.get('new_etablissement')
@@ -91,6 +91,7 @@ def save_establishment(etablissement):
         abort(400)
     
 @app.route('/delete_establishment/<string:etablissement>', methods=['POST'])
+@admin_only
 def delete_inspection_request(etablissement):
     if request.method == 'POST':
         try:
@@ -295,35 +296,37 @@ def create_user_profile():
 @app.route("/login", methods=["GET", "POST"])
 def login_user():
     if request.method == "GET":
-        if "user" not in session:
+        if "user" or "admin" not in session :
             return render_template("login.html"), 200
-        flash("Vous etes deja connecté ! ")
+        flash("Vous êtes déjà connecté ! ")
         utilisateur_id = get_user_id()
-        return redirect(url_for('user_profile_home', utilisateur_id = utilisateur_id))
+        return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
     else:
-        error_message = "Email and/or Password incorrect!"
-        email = request.form["email"]
-        password = request.form["password"]
-
         db = Database()
+        try:
+            error_message = "Email and/or Password incorrect!"
+            email = request.form["email"]
+            password = request.form["password"]
 
-        user = db.get_user_by_email(email)
 
-        if user:
-            hashed_password = hashlib.sha512(str(password + user[4]).encode("utf-8")).hexdigest() 
-            if user[3] == hashed_password:
-                utilisateur_id = user[2]
-                if utilisateur_id:
-                    if user[1] == 'admin':
-                        id_session = get_user_id_session("admin")
-                        db.insert_session(id_session, email)  
-                    else:
-                        id_session = get_user_id_session("user")
-                        db.insert_session(id_session, email)  
+            user = db.get_user_by_email(email)
 
-                    return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
+            if user:
+                hashed_password = hashlib.sha512(str(password + user[4]).encode("utf-8")).hexdigest()
+                if user[3] == hashed_password:
+                    utilisateur_id = user[0]
+                    if utilisateur_id and user[7] :
+                        id_session = get_user_id_session(user[7])  # Use role as session identifier
+                        db.insert_session(id_session, email)
+                        return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
+                else:
+                    return render_template("login.html", error_message=error_message), 404
+            else:
+                return render_template("login.html", error_message=error_message), 404
+        except Exception as e:
+            db.get_connection().rollback()
+            return render_template("login.html", error_message="Server have error"), 500
 
-        return render_template("login.html", error_message=error_message), 404
 
 
 def get_user_id_session(role):
@@ -334,17 +337,33 @@ def get_user_id_session(role):
 @app.route("/logout")
 @authenticated_only
 def logout_user():
-    if "user" in session:
-        session_id = session["user"]
+    role = ["user", "admin"]
+    if role[0] in session:
+        session_id = session[role[0]]
         db = Database()
         db.delete_session(session_id)
-        session.pop("user", None)
+        session.pop(role[0], None)
+        return redirect(url_for('login_user'))
+    if role[1] in session:
+        session_id = session[role[1]]
+        db = Database()
+        db.delete_session(session_id)
+        session.pop(role[1], None)
         return redirect(url_for('login_user'))
 
 
 def get_user_id():
-    if "user" in session:
-        session_id = session["user"]
+    role = ["user", "admin"]
+    if role[0] in session:
+        session_id = session[role[0]]
+        db = Database()
+        utilisateur_id = db.get_user_id_by_session(session_id)
+        if utilisateur_id:
+            return utilisateur_id
+        else:
+            return redirect(url_for('logout_user'))
+    if role[1] in session:
+        session_id = session[role[1]]
         db = Database()
         utilisateur_id = db.get_user_id_by_session(session_id)
         if utilisateur_id:

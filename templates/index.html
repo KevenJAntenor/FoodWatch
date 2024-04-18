@@ -4,6 +4,10 @@
 
 {% block content %}
 
+<script>
+    const is_admin_authenticated = '{{ is_admin_authenticated|tojson }}';
+</script>
+
 <div class="container text-center mt-4">
     <h1 class="mb-4">Search for Violations</h1>
     <div class="row justify-content-center">
@@ -33,12 +37,14 @@
                 <button type="submit" class="btn btn-primary mb-2">Search</button>
             </form>
 
-            <table class="table table-bordered mt-4" id="results-table" style="display: none;">
+            <table class="table table-hover" id="results-table" style="display: none;">
                 <thead>
                     <tr>
                         <th>Etablissement</th>
                         <th>Nombre de Contraventions</th>
-                        <th>Actions</th>
+                        {% if is_admin_authenticated %}
+                            <th>Actions</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody id="results-body">
@@ -49,7 +55,6 @@
             <form id="recherche-nom-restaurant" class="form-inline justify-content-center mb-4">
                 <div class="form-group mr-2">
                     <select id="select-restaurant" class="form-control">
-
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary mb-2">Search</button>
@@ -60,8 +65,7 @@
 
 <div class="container mt-4">
     <div id="affichage-infractions" class="row">
-
     </div>
 </div>
-</div>
+
 {% endblock %}

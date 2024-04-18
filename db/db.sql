@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS utilisateurs (
     hashed_password VARCHAR(255) NOT NULL,
     salt VARCHAR(255) NOT NULL,
     token VARCHAR(255),
-    photo_profil BLOB
+    photo_profil BLOB,
+    role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user'))
 );
 
 
