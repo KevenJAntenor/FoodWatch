@@ -19,6 +19,9 @@
     </ul>
     <ul class="navbar-nav ml-auto">
       {% if is_authenticated %}
+      <li class="nav-item {{ 'active' if request.path == '/login' else '' }}">
+        <a class="nav-link" href="/login">My profile</a>
+      </li>
       <li class="nav-item {{ 'active' if request.path == '/logout' else '' }}">
         <a class="nav-link" href="/logout">Logout</a>
       </li>

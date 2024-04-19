@@ -72,7 +72,7 @@ def get_violations_between_dates():
 
     return jsonify(violations)
 
-@app.route('/update_establishment/<string:etablissement>', methods=['POST'])
+@app.route('/change_establishment_name/<string:etablissement>', methods=['POST'])
 @admin_only
 def save_establishment(etablissement):
     if request.method == 'POST':
@@ -281,7 +281,7 @@ def create_user_profile():
 
             utilisateur_id = db.insert_user(nom, courriel, salt, hashed_password)
             
-            id_session = get_user_id_session()
+            id_session = get_user_id_session('user')
 
             db.insert_session(id_session, courriel)  
             db.insert_user_establishments(utilisateur_id, selected_establishments)
@@ -296,11 +296,12 @@ def create_user_profile():
 @app.route("/login", methods=["GET", "POST"])
 def login_user():
     if request.method == "GET":
-        if "user" or "admin" not in session :
-            return render_template("login.html"), 200
-        flash("Vous êtes déjà connecté ! ")
-        utilisateur_id = get_user_id()
-        return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
+        if 'user' in session or 'admin' in session:
+            flash("Vous êtes connecté !")
+            utilisateur_id = get_user_id()  
+            return redirect(url_for('user_profile_home', utilisateur_id=utilisateur_id))
+        
+        return render_template("login.html"), 200
     else:
         db = Database()
         try:
@@ -390,9 +391,9 @@ def user_profile_home(utilisateur_id):
         error_message = "L'utilisateur avec l'identifiant '" + str(utilisateur_id) + "' n'existe pas !"
         abort(404, error_message)
 
-@app.route('/update_establishments/<int:utilisateur_id>', methods=["POST"])
+@app.route('/update_user_establishments_list/<int:utilisateur_id>', methods=["POST"])
 @authenticated_only
-def update_establishments(utilisateur_id):
+def update_user_establishments_list(utilisateur_id):
     try:
         db = Database()
         selectedEstablishments = request.form.getlist('selectedEstablishments')  
