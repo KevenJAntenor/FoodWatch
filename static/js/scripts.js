@@ -9,33 +9,47 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('quick-search-form');
     const resultsTable = document.getElementById('results-table');
     const resultsBody = document.getElementById('results-body');
+    const loadingIcon = document.getElementById('loading-icon'); 
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         const startDate = document.getElementById('start-date').value;
         const endDate = document.getElementById('end-date').value;
 
+        loadingIcon.style.display = 'block';
         fetch(`/contrevenants?du=${startDate}&au=${endDate}`)
             .then(response => response.json())
             .then(data => {
                 resultsBody.innerHTML = '';
                 data.forEach(violation => {
-                    console.log(is_admin_authenticated);
                     const row = `<tr data-id="${violation.id}">
                                     <td contenteditable="false" class="editable etablissement">${violation.etablissement}</td>
                                     <td contenteditable="false">${violation.count}</td>
-                                    ${is_admin_authenticated ? `<td>
-                                        <button class="btn btn-primary btn-sm edit-btn">Edit</button>
-                                        <button class="btn btn-danger btn-sm delete-btn">Delete</button>
-                                        <button class="btn btn-success btn-sm save-btn" style="display:none;">Save</button>
-                                        <button class="btn btn-warning btn-sm cancel-btn" style="display:none;">Cancel</button>
-                                    </td>` : ''}
                                  </tr>`;
                     resultsBody.innerHTML += row;
                 });
+
                 resultsTable.style.display = 'table';
 
+                loadingIcon.style.display = 'none';
+
                 if (is_admin_authenticated) {
+                    data.forEach(violation => {
+                        const row = `<tr data-id="${violation.id}">
+                                        <td contenteditable="false" class="editable etablissement">${violation.etablissement}</td>
+                                        <td contenteditable="false">${violation.count}</td>
+                                        <td>
+                                            <button class="btn btn-primary btn-sm edit-btn">Edit</button>
+                                            <button class="btn btn-danger btn-sm delete-btn">Delete</button>
+                                            <button class="btn btn-success btn-sm save-btn" style="display:none;">Save</button>
+                                            <button class="btn btn-warning btn-sm cancel-btn" style="display:none;">Cancel</button>
+                                        </td>
+                                    </tr>`;
+                        resultsBody.innerHTML += row;
+                    });
+
+                    resultsTable.style.display = 'table';
+                    
                     document.querySelectorAll('.edit-btn').forEach(button => {
                         button.addEventListener('click', function () {
                             const tr = button.closest('tr');
@@ -144,7 +158,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                 }
             })
-            .catch(error => console.error('Error fetching data:', error));
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                loadingIcon.style.display = 'none';
+            });
     });
 });
 
