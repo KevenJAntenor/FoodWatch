@@ -61,12 +61,6 @@ version: v1
                 </establishment>
               </establishments>
 
-types:
-  EstablishmentCsv:
-    type: file
-    fileTypes: ['text/csv']
-    description: CSV contenant le nom de l'établissement et le nombre d'infractions.
-
 /establishments_csv:
   get:
     description: Obtient une liste des établissements avec le nombre d'infractions en format CSV.
@@ -84,26 +78,6 @@ types:
         description: Requête malformée. L'URL doit être correctement formatée.
       500:
         description: Erreur interne du serveur.
-
-types:
-  demande_inspection:
-    type: object
-    properties:
-      nom_etablissement: string
-      adresse: string
-      ville: string
-      date_visite: date-only
-      nom_client: string
-      prenom_client: string
-      description_probleme: string
-    required:
-      - nom_etablissement
-      - adresse
-      - ville
-      - date_visite
-      - nom_client
-      - prenom_client
-      - description_probleme
 
 /demande_inspection:
   post:
@@ -135,7 +109,6 @@ types:
                 "error": "Internal server error. Please try again later."
               }
 
-
 /demande_inspection/{requestId}:
   uriParameters:
     requestId:
@@ -154,6 +127,7 @@ types:
           application/json:
             example: |
               { "error": "Demande d'inspection non trouvée." }
+
 /create_user_profile:
   post:
     description: Create a new user profile.
@@ -184,6 +158,265 @@ types:
                 "error": "Internal server error. Please try again later."
               }
 
+/change_establishment_name/{etablissement}:
+  uriParameters:
+    etablissement:
+      description: The current name of the establishment to update.
+      type: string
+  post:
+    description: Update the name of an establishment.
+    securedBy: admin
+    body:
+      application/json:
+        example: |
+          {
+            "new_etablissement": "New Establishment Name"
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "message": "Etablissement name updated successfully."
+              }
+      400:
+        body:
+          application/json:
+            example: |
+              {
+                "error": "New establishment name is required."
+              }
+      500:
+        body:
+          application/json:
+            example: |
+              {
+                "message": "Failed : An error occurred while trying to update the establishment name."
+              }
+
+/restaurant_names:
+  get:
+    description: Retrieve a list of restaurant names from the database.
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              ["Restaurant XYZ", "Cafe ABC"]
+
+/infractions_par_restaurant:
+  get:
+    description: Retrieves a list of infractions for a specified restaurant.
+    queryParameters:
+      nom:
+        description: The name of the restaurant.
+        type: string
+        required: true
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              [{"date": "2023-04-01", "type": "Health Code Violation", "description": "Improper storage temperatures."}]
+      400:
+        body:
+          application/json:
+            example: |
+              {"error": "Restaurant name is required."}
+
+
+/delete_establishment/{etablissement}:
+  uriParameters:
+    etablissement:
+      description: The name of the establishment to delete.
+      type: string
+  post:
+    description: Deletes a specific establishment by name.
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {"message": "Establishment deleted successfully!"}
+      404:
+        body:
+          application/json:
+            example: |
+              {"message": "Establishment not found."}
+      500:
+        body:
+          application/json:
+            example: |
+              {"error": "Internal server error."}
+
+/search_results/{search_by}/{search_term}:
+  uriParameters:
+    search_by:
+      description: The attribute to search by (e.g., 'name', 'category').
+      type: string
+    search_term:
+      description: The search term to apply.
+      type: string
+  get:
+    description: Retrieves search results based on the specified criteria and pagination.
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "rows": [{"name": "Restaurant XYZ", "address": "1234 Main St"}],
+                "total_pages": 5,
+                "current_page": 1
+              }
+
+types:
+  ErrorResponse:
+    type: object
+    properties:
+      error: string
+      success: boolean
+
+/update_user_establishments_list:
+  /{utilisateur_id}:
+    uriParameters:
+      utilisateur_id:
+        description: The unique identifier of the user
+        type: integer
+        required: true
+    post:
+      description: Updates the list of establishments associated with a given user.
+      securedBy: [basic_auth]
+      body:
+        application/x-www-form-urlencoded:
+          properties:
+            selectedEstablishments:
+              description: List of establishment IDs selected by the user.
+              type: array
+              items:
+                type: string
+                example: ["123", "456", "789"]
+      responses:
+        200:
+          description: Successful update of user establishments.
+          body:
+            application/json:
+              example: |
+                {
+                  "message": "Mise à jour des vos établissements effectuée !"
+                }
+        500:
+          description: Error occurred during the operation.
+          body:
+            application/json:
+              type: Error
+              example: |
+                {
+                  "error": "Database connection failed",
+                  "success": false
+                }
+
+types:
+  ErrorResponse:
+    type: object
+    properties:
+      error: string
+      success: boolean
+
+/user:
+  /upload_profile_pic/{utilisateur_id}:
+    uriParameters:
+      utilisateur_id:
+        type: integer
+        description: The ID of the user whose profile picture is being updated.
+    post:
+      description: Uploads a new profile picture for a user.
+      securedBy: [jwt]
+      body:
+        multipart/form-data:
+          formParameters:
+            photo_profil:
+              description: The image file of the user's new profile picture.
+              type: file
+              required: true
+      responses:
+        200:
+          description: Profile picture updated successfully.
+          body:
+            application/json:
+              properties:
+                success: boolean
+        401:
+          description: Unauthorized - User not authenticated.
+          body:
+            text/html:
+        500:
+          description: Internal Server Error - Unable to process the request.
+          body:
+            application/json:
+              type: ErrorResponse
+
+  /unsubscribe/{token}:
+    uriParameters:
+      token:
+        type: string
+        description: Security token associated with the subscription.
+    get:
+      description: Returns the unsubscribe page.
+      responses:
+        200:
+          description: Page rendered successfully.
+          body:
+            text/html:
+    post:
+      description: Unsubscribes a user from an establishment's notifications.
+      body:
+        application/x-www-form-urlencoded:
+          formParameters:
+            establishment:
+              description: The name of the establishment to unsubscribe from.
+              type: string
+      responses:
+        200:
+          description: Successfully unsubscribed from the establishment.
+          body:
+            application/json:
+              properties:
+                message: string
+        500:
+          description: Internal Server Error - Unable to unsubscribe the user.
+          body:
+            application/json:
+              type: ErrorResponse
+              
 /doc:
   get:
     description: Provides the RAML documentation of this API.
+
+types:
+  EstablishmentCsv:
+    type: file
+    fileTypes: ['text/csv']
+    description: CSV contenant le nom de l'établissement et le nombre d'infractions.
+
+types:
+  demande_inspection:
+    type: object
+    properties:
+      nom_etablissement: string
+      adresse: string
+      ville: string
+      date_visite: date-only
+      nom_client: string
+      prenom_client: string
+      description_probleme: string
+    required:
+      - nom_etablissement
+      - adresse
+      - ville
+      - date_visite
+      - nom_client
+      - prenom_client
+      - description_probleme
+
