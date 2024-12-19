@@ -12,3 +12,40 @@ A web application that provides real-time access to Montreal's food establishmen
 - Automated data synchronization with Montreal's open data
 
 Built with Python/Flask, SQLite, and modern web technologies. Perfect for citizens, health inspectors, and restaurant owners who want to stay informed about food safety in Montreal.
+
+## 🚀 How to Execute
+
+1. **Setup Virtual Environment & Install Dependencies**
+   ```bash
+   make install
+   ```
+
+2. **Initialize Database**
+   ```bash
+   make init-db
+   ```
+
+3. **Run Development Server**
+   ```bash
+   make run
+   ```
+
+4. **Run Tests**
+   ```bash
+   make test
+   ```
+
+5. **Code Quality**
+   ```bash
+   make lint
+   ```
+
+6. **Clean Project**
+   ```bash
+   make clean
+   ```
+
+### Prerequisites
+- Python 3.x
+- pip
+- make
