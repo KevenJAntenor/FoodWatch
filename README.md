@@ -45,7 +45,7 @@ Built with Python/Flask, SQLite, and modern web technologies. Perfect for citize
    make clean
    ```
 
-### Prerequisites
+### 🛠️ Prerequisites
 - Python 3.x
 - pip
 - make
