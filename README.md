@@ -1,4 +1,4 @@
-# 🍽️ FoodWatch 👀
+ # 🍽️ FoodWatch 👀
 
 A web application that provides real-time access to Montreal's food establishment inspection data. This system allows users to track health violations, submit inspection requests, and receive notifications about food safety incidents across Montreal's restaurants and food establishments.
 
